@@ -5,9 +5,12 @@ import math
 import arrayImporter as imp
 import statistics as stat
 
-dataTime = np.genfromtxt(r'C:\Users\henke\Desktop\Data\S4\LA-200\NVG_2012_S4_A_LA_00203_DateTime.csv', delimiter = ',', skip_header=1)
+subject = imp.Subject()
+dataTime = subject.LAtimeArray
+dataRegist = subject.LAregArray
+dataArray = subject.LAcalArray
+
 dtimeArray = dataTime[:,0]
-dataRegist = np.genfromtxt(r'C:\Users\henke\Desktop\Data\S4\LA-200\NVG_2012_S4_A_LA_00203_Registers.csv', delimiter = ',', skip_header=1)
 
 def switch_dataRate(argument):
     switcher = {
@@ -32,8 +35,6 @@ def getPoints(dataArray, RMS):
         if points[i]-points[i-1] < sampleFrekvens/2:
             packets.append(points[i])
     return packets
-
-dataArray = imp.fileImport("LA")
 
 sampleFrekvens = switch_dataRate(8)     #dataRegist[69,2]                   #DataRate for inertia and mag
 aproxSekvensTime = 6
