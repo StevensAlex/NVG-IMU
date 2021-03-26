@@ -1,6 +1,7 @@
 import numpy as np
 import tkinter as tk
 from tkinter import filedialog
+import os
 
 class Subject():
     def __init__(self):
@@ -10,24 +11,20 @@ class Subject():
 
         #import IMU's being used
         print("Loading data, this may take a while")
-        LAcalPath = (path + "\\LA-200\\NVG_2012_S4_A_LA_00203_CalInertialAndMag.csv")
-        LAtimePath = (path + "\\LA-200\\NVG_2012_S4_A_LA_00203_DateTime.csv")
-        LAregPath = (path + "\\LA-200\\NVG_2012_S4_A_LA_00203_Registers.csv")
 
+        #LA
+        LAPath = path + "\\LA-200\\"
+        files = os.listdir(LAPath)
+        for file in files:
+            if 'CalInertial' in file:
+                LAcalPath = LAPath + file
+            elif 'Registers' in file:
+                LAregPath = LAPath + file
+            elif 'DateTime' in file:
+                LAtimePath = LAPath + file
+        
         self.LAcalArray = np.genfromtxt(LAcalPath, delimiter=',', skip_header=1)
         self.LAtimeArray = np.genfromtxt(LAtimePath, delimiter=',', skip_header=1)
         self.LAregArray = np.genfromtxt(LAregPath, delimiter=',', skip_header=1)
         print("Loading complete!")
         
-
-def fileImport(name):
-
-    root = tk.Tk()
-    root.withdraw()
-    path = str(filedialog.askdirectory())
-    filePath = (path + "\\LA-200\\NVG_2012_S4_A_LA_00203_CalInertialAndMag.csv")
-    #fileName = filedialog.askopenfilename(title = ("Select", name, "file"),filetypes = (("csv files","*.csv"),("all files","*.*")))
-    dataArray = np.genfromtxt(filePath, delimiter=',', skip_header=1)
-    return dataArray
-
-#fileImport("test")
