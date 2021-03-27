@@ -100,7 +100,7 @@ for i in range(0, len(cutPacks)):
     T[i] = i*(tCount/len(cutPacks))
 
 
-startSek = 180                                                            #Konstant som väljs av användaren (start o stopp)
+startSek = 180                                                            #Konstanter som väljs av användaren (start o stopp)
 stopSek = 240
 intvalTimeStart = math.floor((len(cutPacks)/tCount)*startSek)
 intvalTimeStop = math.floor((len(cutPacks)/tCount)*(stopSek+5))
