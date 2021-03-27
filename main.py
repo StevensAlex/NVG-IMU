@@ -115,7 +115,7 @@ for i in range(1, len(pointsInInterval)):
         stpFreq.append(1/(pointsInInterval[i]-pointsInInterval[i-1]))       #Converted to Hz (step/second)
                      
 #print(stpFreq)
-print('During '+ str(fqArray[len(stpFreq)]-fqArray[0]) + ' S in the interval of '+ str(startSek) + '-' + str(stopSek) + ', '+ str(len(stpFreq)) + ' steps where made')
+print('During '+ str(fqArray[len(stpFreq)]-fqArray[0]) + ' s in the interval of '+ str(startSek) + '-' + str(stopSek) + ', '+ str(len(stpFreq)) + ' steps were made with an average step frequency of ' + str(stat.mean(stpFreq)) + ' Hz')
 print('Sample standard diviation: ' + str(stat.stdev(stpFreq)))             #Sample standard deviation of data
 
     #Plotting:
