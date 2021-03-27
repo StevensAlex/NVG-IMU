@@ -36,11 +36,11 @@ def getPoints(dataArray, RMS):
             packets.append(points[i])
     return packets
 
-sampleFrekvens = switch_dataRate(8)     #dataRegist[69,2]                   #DataRate for inertia and mag
+sampleFrekvens = switch_dataRate(dataRegist[69,2])                          #DataRate for inertia and mag
 aproxSekvensTime = 6
 dataSelection = []
+#RMS
 Square = 0
-
 for i in range(1,len(dataArray)):
     Square += dataArray[i,6]**2
 RMS = math.sqrt(Square/len(dataArray))
@@ -67,7 +67,7 @@ while (count < len(dataSelection)):                                     #Remove 
             wait -= 1
     wait += 1
 
-indexes = []                                                            #Find the indexes of the selected points in the original matrix
+indexes = []                                                                #Find the indexes of the selected points in the original matrix
 for packet in dataSelection:
     indexes.append(np.where(dataArray[:,0] == packet))
 
@@ -97,32 +97,31 @@ for i in range(0, len(dtimeArray)):
 T = np.empty((len(cutPacks)), dtype = float)
 
 for i in range(0, len(cutPacks)):
-    #T.append((cutPacks[i]-zeroTime)/sampleFrekvens)         #ca 2perioder/s
     T[i] = i*(tCount/len(cutPacks))
-    #T.append(i*(tCount/len(cutPacks)))             #ca 1 period/s
 
 
-startSek = 180                                                          #Konstant som väljs av användaren (start o stopp)
+startSek = 180                                                            #Konstanter som väljs av användaren (start o stopp)
 stopSek = 240
 intvalTimeStart = math.floor((len(cutPacks)/tCount)*startSek)
-intvalTimeStop = math.floor((len(cutPacks)/tCount)*stopSek)
+intvalTimeStop = math.floor((len(cutPacks)/tCount)*(stopSek+5))
 
-fqArray = []
+fqArray = []                                                                #Help for visualisation, time points
 stpFreq = []
 pointsInInterval = T[intvalTimeStart:intvalTimeStop][np.nonzero(cutZArr[intvalTimeStart:intvalTimeStop] > 0.3)] #Justeras efter vilken arr o vilkor
 fqArray.append(pointsInInterval[0])
 for i in range(1, len(pointsInInterval)):
-    if(pointsInInterval[i]-pointsInInterval[i-1]) > 0.51:               # Bör omvandlas till en mer generlell konstant
-        fqArray.append(pointsInInterval[i])                             #Mest till för att kunna visualisera med axvline
-        stpFreq.append(pointsInInterval[i]-pointsInInterval[i-1])
-
-print(len(stpFreq))        #Number of steps during time period
-print(stat.stdev(stpFreq)) #Sample standard deviation of data
+    if ( (pointsInInterval[i] - (pointsInInterval[0]+(stopSek-startSek)) < ((pointsInInterval[0]+(stopSek-startSek))-fqArray[len(fqArray)-1])) and (pointsInInterval[i]-pointsInInterval[i-1]) > 0.51):
+        fqArray.append(pointsInInterval[i])                                 #Mest till för att kunna visualisera med axvline
+        stpFreq.append(1/(pointsInInterval[i]-pointsInInterval[i-1]))       #Converted to Hz (step/second)
+                     
+#print(stpFreq)
+print('During '+ str(fqArray[len(stpFreq)]-fqArray[0]) + ' S in the interval of '+ str(startSek) + '-' + str(stopSek) + ', '+ str(len(stpFreq)) + ' steps where made')
+print('Sample standard diviation: ' + str(stat.stdev(stpFreq)))             #Sample standard deviation of data
 
     #Plotting:
 for i in range(0,len(fqArray)):
     plt.axvline(fqArray[i], color = 'r', ymin= 0.15, ymax=0.85)
-#plt.plot(dataArray[:,0], dataArray[:,4], label="X")            #Print whole dataArray
+#plt.plot(dataArray[:,0], dataArray[:,4], label="X")                        #Print whole dataArray
 #for i in range(0,len(dataSelection)):
 #        plt.axvline(dataSelection[i], color = 'r', ymin= 0.25, ymax=0.75)
 
