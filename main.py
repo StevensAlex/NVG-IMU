@@ -36,11 +36,11 @@ def getPoints(dataArray, RMS):
             packets.append(points[i])
     return packets
 
-sampleFrekvens = switch_dataRate(dataRegist[69,2])                          #DataRate for inertia and mag
+sampleFrekvens = switch_dataRate(8)     #dataRegist[69,2]                   #DataRate for inertia and mag
 aproxSekvensTime = 6
 dataSelection = []
-#RMS
 Square = 0
+
 for i in range(1,len(dataArray)):
     Square += dataArray[i,6]**2
 RMS = math.sqrt(Square/len(dataArray))
@@ -67,7 +67,7 @@ while (count < len(dataSelection)):                                     #Remove 
             wait -= 1
     wait += 1
 
-indexes = []                                                                #Find the indexes of the selected points in the original matrix
+indexes = []                                                            #Find the indexes of the selected points in the original matrix
 for packet in dataSelection:
     indexes.append(np.where(dataArray[:,0] == packet))
 
@@ -97,15 +97,17 @@ for i in range(0, len(dtimeArray)):
 T = np.empty((len(cutPacks)), dtype = float)
 
 for i in range(0, len(cutPacks)):
+    #T.append((cutPacks[i]-zeroTime)/sampleFrekvens)         #ca 2perioder/s
     T[i] = i*(tCount/len(cutPacks))
+    #T.append(i*(tCount/len(cutPacks)))             #ca 1 period/s
 
 
-startSek = 180                                                            #Konstanter som väljs av användaren (start o stopp)
+startSek = 180                                                          #Konstant som väljs av användaren (start o stopp)
 stopSek = 240
 intvalTimeStart = math.floor((len(cutPacks)/tCount)*startSek)
-intvalTimeStop = math.floor((len(cutPacks)/tCount)*(stopSek+5))
+intvalTimeStop = math.floor((len(cutPacks)/tCount)*stopSek)
 
-fqArray = []                                                                #Help for visualisation, time points
+fqArray = []
 stpFreq = []
 pointsInInterval = T[intvalTimeStart:intvalTimeStop][np.nonzero(cutXArr[intvalTimeStart:intvalTimeStop] > -0.2)] #Justeras efter vilken arr o vilkor
 fqArray.append(pointsInInterval[0])
@@ -122,7 +124,7 @@ print('Sample standard diviation: ' + str(stat.stdev(stpFreq)))             #Sam
     #Plotting:
 for i in range(0,len(fqArray)):
     plt.axvline(fqArray[i], color = 'r', ymin= 0.15, ymax=0.85)
-#plt.plot(dataArray[:,0], dataArray[:,4], label="X")                        #Print whole dataArray
+#plt.plot(dataArray[:,0], dataArray[:,4], label="X")            #Print whole dataArray
 #for i in range(0,len(dataSelection)):
 #        plt.axvline(dataSelection[i], color = 'r', ymin= 0.25, ymax=0.75)
 
