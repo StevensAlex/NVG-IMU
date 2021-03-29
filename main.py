@@ -12,6 +12,46 @@ dataArray = subject.LAcalArray
 
 dtimeArray = dataTime[:,0]
 
+timeStart = dataTime[0, 4]*3600 + dataTime[0, 5]*60 + dataTime[0, 6]
+last = len(dataTime[:,0]) - 1
+timeStop = dataTime[last, 4]*3600 + dataTime[last, 5]*60 + dataTime[last, 6]
+timeTotal = timeStop - timeStart
+print(timeTotal)
+dt = timeTotal / len(dataArray[:,0])
+print("time per packet: ", dt, 'implying data rate of ', 1/dt , 'Hz')
+globalTimeArr = np.linspace(0, timeTotal, num=len(dataArray[:,0]))
+
+a_x = []
+a_z = []
+theta = [dataArray[0, 2]*dt]
+for i in range(len(dataArray[:,0])):
+    dTheta = dataArray[i, 2]
+    dThetaPrev = dataArray[i-1, 2]
+    theta = (dTheta*dt*i) - (dThetaPrev*dt*(i-1))
+    mat = np.array([[-(math.sin(theta)), math.cos(theta)],[math.cos(theta), math.sin(theta)]])
+    vec = np.array([[dataArray[i,4]*9.80665],[dataArray[i,6]*9.80665]])
+    product = np.dot(mat, vec)
+    accVec = (-product) - np.array([[0],[9.80665]])
+    a_x.append(accVec[0,0])
+    a_z.append(accVec[1,0])
+
+xList = [(a_x[0]*dt**2)/2]
+zList = [(a_z[0]*dt**2)/2]
+x=0
+z=0
+for i in range(len(a_x) - 1):
+    x += ((a_x[i+1]*(dt**2))/2) - ((a_x[i]*(dt**2))/2)
+    z += ((a_z[i+1]*(dt**2))/2) - ((a_z[i]*(dt**2))/2)
+    xList.append(x)
+    zList.append(z)
+
+
+plt.figure()
+plt.plot(globalTimeArr, zList)
+plt.title("horizontal foot movement")
+plt.show()
+
+
 def switch_dataRate(argument):
     switcher = {
         0: "Disabled",
@@ -36,11 +76,11 @@ def getPoints(dataArray, RMS):
             packets.append(points[i])
     return packets
 
-sampleFrekvens = switch_dataRate(8)     #dataRegist[69,2]                   #DataRate for inertia and mag
+sampleFrekvens = switch_dataRate(dataRegist[69,2])                          #DataRate for inertia and mag
 aproxSekvensTime = 6
 dataSelection = []
+#RMS
 Square = 0
-
 for i in range(1,len(dataArray)):
     Square += dataArray[i,6]**2
 RMS = math.sqrt(Square/len(dataArray))
@@ -67,7 +107,7 @@ while (count < len(dataSelection)):                                     #Remove 
             wait -= 1
     wait += 1
 
-indexes = []                                                            #Find the indexes of the selected points in the original matrix
+indexes = []                                                                #Find the indexes of the selected points in the original matrix
 for packet in dataSelection:
     indexes.append(np.where(dataArray[:,0] == packet))
 
@@ -97,17 +137,15 @@ for i in range(0, len(dtimeArray)):
 T = np.empty((len(cutPacks)), dtype = float)
 
 for i in range(0, len(cutPacks)):
-    #T.append((cutPacks[i]-zeroTime)/sampleFrekvens)         #ca 2perioder/s
     T[i] = i*(tCount/len(cutPacks))
-    #T.append(i*(tCount/len(cutPacks)))             #ca 1 period/s
 
 
-startSek = 180                                                          #Konstant som väljs av användaren (start o stopp)
+startSek = 180                                                            #Konstanter som väljs av användaren (start o stopp)
 stopSek = 240
 intvalTimeStart = math.floor((len(cutPacks)/tCount)*startSek)
-intvalTimeStop = math.floor((len(cutPacks)/tCount)*stopSek)
+intvalTimeStop = math.floor((len(cutPacks)/tCount)*(stopSek+5))
 
-fqArray = []
+fqArray = []                                                                #Help for visualisation, time points
 stpFreq = []
 pointsInInterval = T[intvalTimeStart:intvalTimeStop][np.nonzero(cutXArr[intvalTimeStart:intvalTimeStop] > -0.2)] #Justeras efter vilken arr o vilkor
 fqArray.append(pointsInInterval[0])
@@ -117,14 +155,14 @@ for i in range(1, len(pointsInInterval)):
         stpFreq.append(1/(pointsInInterval[i]-pointsInInterval[i-1]))       #Converted to Hz (step/second)
                      
 #print(stpFreq)
-print('During '+ str(fqArray[len(stpFreq)]-fqArray[0]) + ' S in the interval of '+ str(startSek) + '-' + str(stopSek) + ', '+ str(len(stpFreq)) + ' steps where made')
+print('During '+ str(fqArray[len(stpFreq)]-fqArray[0]) + ' s in the interval of '+ str(startSek) + '-' + str(stopSek) + ', '+ str(len(stpFreq)) + ' steps were made with an average step frequency of ' + str(stat.mean(stpFreq)) + ' Hz')
 print('Sample standard diviation: ' + str(stat.stdev(stpFreq)))             #Sample standard deviation of data
 
-   
     #Plotting:
+plt.figure()
 for i in range(0,len(fqArray)):
     plt.axvline(fqArray[i], color = 'r', ymin= 0.15, ymax=0.85)
-#plt.plot(dataArray[:,0], dataArray[:,4], label="X")            #Print whole dataArray
+#plt.plot(dataArray[:,0], dataArray[:,4], label="X")                        #Print whole dataArray
 #for i in range(0,len(dataSelection)):
 #        plt.axvline(dataSelection[i], color = 'r', ymin= 0.25, ymax=0.75)
 
