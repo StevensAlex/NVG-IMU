@@ -73,8 +73,8 @@ for packet in dataSelection:
 
 
     #Decide which session to make calculations on:
-startSession = 4
-stopSession = 5
+startSession = 6
+stopSession = 7
 cutPacks = dataArray[int(indexes[startSession][0]):int(indexes[stopSession][0]),0]           #Cut out an array during a walking trial S4 4-5, S12 5-6
 
 cutYArr = dataArray[int(indexes[startSession][0]):int(indexes[stopSession][0]),5] 
@@ -109,16 +109,18 @@ intvalTimeStop = math.floor((len(cutPacks)/tCount)*stopSek)
 
 fqArray = []
 stpFreq = []
-pointsInInterval = T[intvalTimeStart:intvalTimeStop][np.nonzero(cutZArr[intvalTimeStart:intvalTimeStop] > 0.3)] #Justeras efter vilken arr o vilkor
+pointsInInterval = T[intvalTimeStart:intvalTimeStop][np.nonzero(cutXArr[intvalTimeStart:intvalTimeStop] > -0.2)] #Justeras efter vilken arr o vilkor
 fqArray.append(pointsInInterval[0])
 for i in range(1, len(pointsInInterval)):
-    if(pointsInInterval[i]-pointsInInterval[i-1]) > 0.51:               # Bör omvandlas till en mer generlell konstant
-        fqArray.append(pointsInInterval[i])                             #Mest till för att kunna visualisera med axvline
-        stpFreq.append(pointsInInterval[i]-pointsInInterval[i-1])
+    if ( (pointsInInterval[i] - (pointsInInterval[0]+(stopSek-startSek)) < ((pointsInInterval[0]+(stopSek-startSek))-fqArray[len(fqArray)-1])) and (pointsInInterval[i]-pointsInInterval[i-1]) > 0.51):
+        fqArray.append(pointsInInterval[i])                                 #Mest till för att kunna visualisera med axvline
+        stpFreq.append(1/(pointsInInterval[i]-pointsInInterval[i-1]))       #Converted to Hz (step/second)
+                     
+#print(stpFreq)
+print('During '+ str(fqArray[len(stpFreq)]-fqArray[0]) + ' S in the interval of '+ str(startSek) + '-' + str(stopSek) + ', '+ str(len(stpFreq)) + ' steps where made')
+print('Sample standard diviation: ' + str(stat.stdev(stpFreq)))             #Sample standard deviation of data
 
-print(len(stpFreq))        #Number of steps during time period
-print(stat.stdev(stpFreq)) #Sample standard deviation of data
-
+   
     #Plotting:
 for i in range(0,len(fqArray)):
     plt.axvline(fqArray[i], color = 'r', ymin= 0.15, ymax=0.85)
@@ -127,8 +129,8 @@ for i in range(0,len(fqArray)):
 #        plt.axvline(dataSelection[i], color = 'r', ymin= 0.25, ymax=0.75)
 
 #plt.plot(T, cutXArr, label="cutArr (X)")
-#plt.plot(T, cutYArr, label="cutArr (Y)")                 #Bäst att detektera/se gait
-plt.plot(T, cutZArr, label="cutArr (Z)")
+plt.plot(T, cutYArr, label="cutArr (Y)")                 #Bäst att detektera/se gait
+#plt.plot(T, cutZArr, label="cutArr (Z)")
 plt.axvline(T[intvalTimeStart], color = 'g', ymin= 0.15, ymax=0.85)
 plt.axvline(T[intvalTimeStop], color = 'g', ymin= 0.15, ymax=0.85)
 
