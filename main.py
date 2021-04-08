@@ -9,8 +9,16 @@ subject = imp.Subject()
 dataTime = subject.LAtimeArray
 dataRegist = subject.LAregArray
 dataArray = subject.LAcalArray
-
+eulerArray = subject.LAeulerArray
+rotationArray = subject.LArotationArray
 dtimeArray = dataTime[:,0]
+
+plt.figure()
+plt.plot(eulerArray[:,0], eulerArray[:,1], label='x/phi')
+plt.plot(eulerArray[:,0], eulerArray[:,2], label='y/theta')
+plt.plot(eulerArray[:,0], eulerArray[:,3], label='z/psi')
+plt.legend()
+#plt.show()
 
 timeStart = dataTime[0, 4]*3600 + dataTime[0, 5]*60 + dataTime[0, 6]
 last = len(dataTime[:,0]) - 1
@@ -21,35 +29,38 @@ dt = timeTotal / len(dataArray[:,0])
 print("time per packet: ", dt, 'implying data rate of ', 1/dt , 'Hz')
 globalTimeArr = np.linspace(0, timeTotal, num=len(dataArray[:,0]))
 
-a_x = []
-a_z = []
-theta = [dataArray[0, 2]*dt]
+print('calculating acceleration vector')
+aList = [np.array([[0], [0], [0]])]
 for i in range(len(dataArray[:,0])):
-    dTheta = dataArray[i, 2]
-    dThetaPrev = dataArray[i-1, 2]
-    theta = (dTheta*dt*i) - (dThetaPrev*dt*(i-1))
-    mat = np.array([[-(math.sin(theta)), math.cos(theta)],[math.cos(theta), math.sin(theta)]])
-    vec = np.array([[dataArray[i,4]*9.80665],[dataArray[i,6]*9.80665]])
-    product = np.dot(mat, vec)
-    accVec = (-product) - np.array([[0],[9.80665]])
-    a_x.append(accVec[0,0])
-    a_z.append(accVec[1,0])
+    theta = eulerArray[i,1] * (math.pi/180)
+    R_se = np.array([[rotationArray[i, 1], rotationArray[i, 2], rotationArray[i, 3]], [rotationArray[i, 4],rotationArray[i, 5], rotationArray[i, 6]], 
+                     [rotationArray[i, 7], rotationArray[i, 8], rotationArray[i, 9]]])              #rotation matrix from IMU coordinates 's' to room coordinates 'e'
+    a_s = np.array([[dataArray[i,4]*9.80665],[dataArray[i,5]*9.80665], [dataArray[i,6]*9.80665]])   #acceleration in IMU coordinates
 
-xList = [(a_x[0]*dt**2)/2]
-zList = [(a_z[0]*dt**2)/2]
-x=0
-z=0
-for i in range(len(a_x) - 1):
-    x += ((a_x[i+1]*(dt**2))/2) - ((a_x[i]*(dt**2))/2)
-    z += ((a_z[i+1]*(dt**2))/2) - ((a_z[i]*(dt**2))/2)
-    xList.append(x)
-    zList.append(z)
+    a_e = -(np.dot(R_se, a_s)) - np.array([[9.80665], [0], [0]])                                       #acceleration in room coordinates - gravity
+    aList.append(a_e)
+print('done!')
+print('calculating velocity and position vectors')
+vList = [np.array([[0], [0], [0]])]
+pList = [np.array([[0], [0], [0]])]
+v_e = 0
+p_e = 0
+for i in range(len(aList) - 2):
+    v_e = ((aList[i] + aList[i-1])/2) * dt
+    vList.append(v_e)
+    #print(v_e)
 
+    p_e = ((vList[-1] + vList[-2])/2) * dt
+    pList.append(p_e)
+print('done!')
 
+p_xList = []
+for arr in pList:
+    p_xList.append(arr[0])
 plt.figure()
-plt.plot(globalTimeArr, zList)
-plt.title("horizontal foot movement")
-plt.show()
+plt.plot(globalTimeArr, p_xList)
+plt.title("vertical foot movement")
+#plt.show()
 
 
 def switch_dataRate(argument):
