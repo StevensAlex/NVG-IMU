@@ -72,6 +72,7 @@ plt.title("vertical foot movement")
 
 zGait = []
 
+
 #Sample rate for data 
 def switch_dataRate(argument):
     switcher = {
