@@ -14,15 +14,6 @@ rotationArray = subject.LArotationArray
 dataQt = subject.LAquaternionArray
 dtimeArray = dataTime[:,0]
 
-timeStart = dataTime[0, 4]*3600 + dataTime[0, 5]*60 + dataTime[0, 6]
-last = len(dataTime[:,0]) - 1
-timeStop = dataTime[last, 4]*3600 + dataTime[last, 5]*60 + dataTime[last, 6]
-timeTotal = timeStop - timeStart
-print(timeTotal)
-dt = timeTotal / len(dataArray[:,0])
-print("time per packet: ", dt, 's implying data rate of ', 1/dt , 'Hz')
-globalTimeArr = np.linspace(0, timeTotal, num=len(dataArray[:,0]))
-
 quaterions = dataQt[:,:]
 q0 =  quaterions[:, 1]
 q1 =  quaterions[:, 2]
@@ -36,42 +27,6 @@ for i in range(0, len(quaterions)):
     roll.append(math.atan2(2*(q0[i]*q1[i]+q2[i]*q3[i]),1-2*(q1[i]**2+q2[i]**2)))
     pitch.append(math.asin(2*(q0[i]*q2[i]-q3[i]*q1[i])))
     yaw.append(math.atan2(2*(q0[i]*q3[i]+q1[i]*q2[i]),1-2*(q2[i]**2+q3[i]**2)))
-
-print('calculating acceleration vector')
-aList = [np.array([[0], [0], [0]])]
-for i in range(len(dataArray[:,0])):
-    theta = eulerArray[i,1] * (math.pi/180)
-    R_se = np.array([[rotationArray[i, 1], rotationArray[i, 2], rotationArray[i, 3]], [rotationArray[i, 4],rotationArray[i, 5], rotationArray[i, 6]], 
-                     [rotationArray[i, 7], rotationArray[i, 8], rotationArray[i, 9]]])              #rotation matrix from IMU coordinates 's' to room coordinates 'e'
-    a_s = np.array([[dataArray[i,4]*9.80665],[dataArray[i,5]*9.80665], [dataArray[i,6]*9.80665]])   #acceleration in IMU coordinates
-
-    a_e = -(np.dot(R_se, a_s)) - np.array([[9.80665], [0], [0]])                                       #acceleration in room coordinates - gravity
-    aList.append(a_e)
-print('done!')
-print('calculating velocity and position vectors')
-vList = [np.array([[0], [0], [0]])]
-pList = [np.array([[0], [0], [0]])]
-v_e = 0
-p_e = 0
-for i in range(len(aList) - 2):
-    v_e = ((aList[i] + aList[i-1])/2) * dt
-    vList.append(v_e)
-    #print(v_e)
-
-    p_e = ((vList[-1] + vList[-2])/2) * dt
-    pList.append(p_e)
-print('done!')
-
-p_xList = []
-for arr in pList:
-    p_xList.append(arr[0])
-plt.figure()
-plt.plot(globalTimeArr, p_xList)
-plt.title("vertical foot movement")
-#plt.show()
-
-zGait = []
-
 
 #Sample rate for data 
 def switch_dataRate(argument):
@@ -186,10 +141,7 @@ for i in range(1, len(pointsInInterval)):
 
 print('During '+ str(fqArray[len(stpFreq)]-fqArray[0]) + ' s in the interval of '+ str(fqArray[0]) + '-' + str(fqArray[len(stpFreq)]) + ', '+ str(len(stpFreq)) + ' steps were made with an average step frequency of ' + str(stat.fmean(stpFreq)) + ' Hz')
 print('Sample standard diviation: ' + str(stat.stdev(stpFreq)) + ' Hz')             #Sample standard deviation of data
-
-
-
-   
+  
     #Plotting:
 plt.figure(2)
 for i in range(0,len(fqArray)):
