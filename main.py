@@ -71,21 +71,6 @@ plt.title("vertical foot movement")
 #plt.show()
 
 zGait = []
-c = 0
-#for i in range(len(a_z) ):
-#    z += zList[i]
-#    zGait.append(z)
-#    if (T[intvalTimeStart+i] == fqArray[c]):                                            #T är i s, så matcha T med de gait-tider som finns i fqArray
-#        if (c < len(fqArray)-1):
-#            c += 1
-#        z = 0
-#        plt.axvline(T[intvalTimeStart+i], color = 'r', ymin= 0.25, ymax=0.75)
-
-
-#plt.figure(1)
-#plt.plot(T[intvalTimeStart:intvalTimeStop], zGait)
-#plt.title("horizontal foot movement")
-#plt.show()
 
 #Sample rate for data 
 def switch_dataRate(argument):
