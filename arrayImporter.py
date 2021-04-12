@@ -36,4 +36,3 @@ class Subject():
         self.LArotationArray = np.genfromtxt(LArotationPath, delimiter=',', skip_header=1)
         self.LAquaternionArray = np.genfromtxt(LAquaterionsPath, delimiter=',', skip_header=1)
         print("Loading complete!")
-        
