@@ -11,6 +11,7 @@ dataRegist = subject.LAregArray
 dataArray = subject.LAcalArray
 eulerArray = subject.LAeulerArray
 rotationArray = subject.LArotationArray
+dataQt = subject.LAquaternionArray
 dtimeArray = dataTime[:,0]
 
 plt.figure()
@@ -29,6 +30,13 @@ dt = timeTotal / len(dataArray[:,0])
 print("time per packet: ", dt, 'implying data rate of ', 1/dt , 'Hz')
 globalTimeArr = np.linspace(0, timeTotal, num=len(dataArray[:,0]))
 
+roll = []
+pitch = []
+yaw = []
+for i in range(0, len(quaterions)):
+    roll.append(math.atan2(2*(q0[i]*q1[i]+q2[i]*q3[i]),1-2*(q1[i]**2+q2[i]**2)))
+    pitch.append(math.asin(2*(q0[i]*q2[i]-q3[i]*q1[i])))
+    yaw.append(math.atan2(2*(q0[i]*q3[i]+q1[i]*q2[i]),1-2*(q2[i]**2+q3[i]**2)))
 print('calculating acceleration vector')
 aList = [np.array([[0], [0], [0]])]
 for i in range(len(dataArray[:,0])):
@@ -65,23 +73,23 @@ plt.title("vertical foot movement")
 
 def switch_dataRate(argument):
     switcher = {
-        0: "Disabled",
-        1: 1,
-        2: 2,
-        3: 4,
-        4: 8,
-        5: 16,
-        6: 32,
-        7: 64,
-        8: 128,
-        9: 256,
-        10: 512
+        0x0000: "Disabled",
+        0x0001: 1,
+        0x0002: 2,
+        0x0003: 4,
+        0x0004: 8,
+        0x0005: 16,
+        0x0006: 32,
+        0x0007: 64,
+        0x0008: 128,
+        0x0009: 256,
+        0x000A: 512
     }
     return switcher.get(argument, 0)
 
 def getPoints(dataArray, RMS):
     packets = [0]
-    points = dataArray[:,0][np.nonzero(dataArray[:,6] > 2.4*RMS)]           #Assign acc(Y)Value > 1.7xRMS to corrresponding packet
+    points = dataArray[:,0][np.nonzero(dataArray[:,6] > 2.4*RMS)]           #Assign acc(Z)Value > 1.7xRMS to corrresponding packet
     for i in range (1,points.size):                                         #Assign packets that lies withing sf/2,
         if points[i]-points[i-1] < sampleFrekvens/2:
             packets.append(points[i])
@@ -90,8 +98,8 @@ def getPoints(dataArray, RMS):
 sampleFrekvens = switch_dataRate(dataRegist[69,2])                          #DataRate for inertia and mag
 aproxSekvensTime = 6
 dataSelection = []
-#RMS
 Square = 0
+
 for i in range(1,len(dataArray)):
     Square += dataArray[i,6]**2
 RMS = math.sqrt(Square/len(dataArray))
@@ -118,70 +126,85 @@ while (count < len(dataSelection)):                                     #Remove 
             wait -= 1
     wait += 1
 
-indexes = []                                                                #Find the indexes of the selected points in the original matrix
+indexes = []                                                            #Find the indexes of the selected points in the original matrix
 for packet in dataSelection:
     indexes.append(np.where(dataArray[:,0] == packet))
 
 
     #Decide which session to make calculations on:
-startSession = 6
-stopSession = 7
+startSession = 4
+stopSession = 5
 cutPacks = dataArray[int(indexes[startSession][0]):int(indexes[stopSession][0]),0]           #Cut out an array during a walking trial S4 4-5, S12 5-6
 
-cutYArr = dataArray[int(indexes[startSession][0]):int(indexes[stopSession][0]),5] 
+cutYArr = dataArray[int(indexes[startSession][0]):int(indexes[stopSession][0]),5]   #5 accY
 cutXArr = dataArray[int(indexes[startSession][0]):int(indexes[stopSession][0]),4]   #4
 cutZArr = dataArray[int(indexes[startSession][0]):int(indexes[stopSession][0]),6] 
 
-
-    #Timeconversion:
-start = 0
-stop = 0
-tCount = 0
+    #Timeconversion of betingelse starting at 0:
 for i in range(0, len(dtimeArray)):
-    if dtimeArray[i] <= (dataSelection[startSession] + sampleFrekvens) and dtimeArray[i] >= (dataSelection[startSession] - sampleFrekvens):
-        start = 1
-    if dtimeArray[i] <= (dataSelection[stopSession] + sampleFrekvens) and dtimeArray[i] >= (dataSelection[stopSession] - sampleFrekvens):
-        stop = 1
-    if (start > 0) and (stop == 0):
-        tCount+=0.5
-    
+    if dtimeArray[i] <= (dataSelection[startSession] + sampleFrekvens):
+        timeStart = dataTime[i, 4]*3600 + dataTime[i, 5]*60 + dataTime[i, 6]
+    if dtimeArray[i] <= (dataSelection[stopSession] + sampleFrekvens):
+        timeStop = dataTime[i, 4]*3600 + dataTime[i, 5]*60 + dataTime[i, 6]
+
+sessionTime = timeStop - timeStart
 T = np.empty((len(cutPacks)), dtype = float)
-
 for i in range(0, len(cutPacks)):
-    T[i] = i*(tCount/len(cutPacks))
+    T[i] = i*(sessionTime/len(cutPacks))
 
-
-startSek = 180                                                            #Konstanter som väljs av användaren (start o stopp)
+startSek = 180                                                         #Konstanter som väljs av användaren (start o stopp)
 stopSek = 240
-intvalTimeStart = math.floor((len(cutPacks)/tCount)*startSek)
-intvalTimeStop = math.floor((len(cutPacks)/tCount)*(stopSek+5))
 
-fqArray = []                                                                #Help for visualisation, time points
+if (startSek > 0):
+    intvalTimeStart = math.floor((len(cutPacks)/sessionTime)*(startSek-1))
+else:
+    intvalTimeStart = math.floor((len(cutPacks)/sessionTime)*(startSek))
+if (stopSek < T[len(T)-1]-5):
+    intvalTimeStop = math.floor((len(cutPacks)/sessionTime)*(stopSek+5))
+else:
+    intvalTimeStop = math.floor((len(cutPacks)/sessionTime)*(stopSek))
+
+fqArray = []
 stpFreq = []
-pointsInInterval = T[intvalTimeStart:intvalTimeStop][np.nonzero(cutXArr[intvalTimeStart:intvalTimeStop] > -0.2)] #Justeras efter vilken arr o vilkor
+
+print("Mean = " + str(stat.fmean(cutXArr)))                                     #Visual checker to see that following algorithm is plaussible
+
+pointsInInterval = T[intvalTimeStart:intvalTimeStop][np.nonzero(cutXArr[intvalTimeStart:intvalTimeStop] > 0.4*stat.fmean(cutXArr))]     #(experimental 
 fqArray.append(pointsInInterval[0])
 for i in range(1, len(pointsInInterval)):
-    if ( (pointsInInterval[i] - (pointsInInterval[0]+(stopSek-startSek)) < ((pointsInInterval[0]+(stopSek-startSek))-fqArray[len(fqArray)-1])) and (pointsInInterval[i]-fqArray[len(fqArray)-1]) > 0.61):
-        fqArray.append(pointsInInterval[i])                                 
-        stpFreq.append(1/(pointsInInterval[i]-pointsInInterval[i-1]))       #Converted to Hz (step/second)
-                     
-#print(stpFreq)
-print('During '+ str(fqArray[len(stpFreq)]-fqArray[0]) + ' s in the interval of '+ str(startSek) + '-' + str(stopSek) + ', '+ str(len(stpFreq)) + ' steps were made with an average step frequency of ' + str(stat.mean(stpFreq)) + ' Hz')
-print('Sample standard diviation: ' + str(stat.stdev(stpFreq)))             #Sample standard deviation of data
+    if ( (pointsInInterval[i] - (pointsInInterval[0]+(stopSek-startSek)) < ((pointsInInterval[0]+(stopSek-startSek))-fqArray[len(fqArray)-1])) and (pointsInInterval[i]-fqArray[len(fqArray)-1]) > 0.61):   #(experimental time value)
+        fqArray.append(pointsInInterval[i])
+        if (len(fqArray) >= 2):
+            stpFreq.append(1/(pointsInInterval[i]-fqArray[len(fqArray)-2]))       #Converted to Hz (step/second)
+        if (len(stpFreq) == 2):
+            if (stpFreq[0] > 1.4*stpFreq[1]):                                       #Remove intitial step that is too short (experimental frequency value)
+                fqArray.remove(fqArray[0])
+                stpFreq.remove(stpFreq[0]) 
 
+print('During '+ str(fqArray[len(stpFreq)]-fqArray[0]) + ' s in the interval of '+ str(fqArray[0]) + '-' + str(fqArray[len(stpFreq)]) + ', '+ str(len(stpFreq)) + ' steps were made with an average step frequency of ' + str(stat.fmean(stpFreq)) + ' Hz')
+print('Sample standard diviation: ' + str(stat.stdev(stpFreq)) + ' Hz')             #Sample standard deviation of data
+  
     #Plotting:
-plt.figure()
+plt.figure(2)
 for i in range(0,len(fqArray)):
-    plt.axvline(fqArray[i], color = 'r', ymin= 0.15, ymax=0.85)
-#plt.plot(dataArray[:,0], dataArray[:,4], label="X")                        #Print whole dataArray
-#for i in range(0,len(dataSelection)):
-#        plt.axvline(dataSelection[i], color = 'r', ymin= 0.25, ymax=0.75)
+    plt.axvline((cutPacks[math.floor((len(cutPacks)/sessionTime)*fqArray[i])]), color = 'r', ymin= 0.15, ymax=0.85)   #Plot for whole or cutPacks
+    #plt.axvline(fqArray[i], color = 'r', ymin= 0.15, ymax=0.85)                        #Plot for x-axis = T
+plt.plot(dataArray[:,0], dataArray[:,4], label="X")                                    #Print whole dataArray
+for i in range(0,len(dataSelection)):
+       plt.axvline(dataSelection[i], color = 'r', ymin= 0.25, ymax=0.75)
 
+#plt.plot(quaterions[:,0], roll, label="Roll|Phi|X(degree)")
+#plt.plot(quaterions[:,0], pitch, label="Pitch|Theta|Y(degree)")
+#plt.plot(quaterions[:,0], yaw, label="Yaw|Psi|Z(degree")
+#plt.plot(T,roll, label="Roll|Phi|X(degree)")
+#plt.plot(T, pitch, label="Pitch|Theta|Y(degree)")
+#plt.plot(T, yaw, label="Yaw|Psi|Z(degree")
+#plt.plot(T, cutXMag, label = "Mag X" )
 #plt.plot(T, cutXArr, label="cutArr (X)")
-plt.plot(T, cutYArr, label="cutArr (Y)")                 #Bäst att detektera/se gait
+#plt.plot(T, cutYArr, label="cutArr (Y)")                 #Bäst att detektera/se gait
 #plt.plot(T, cutZArr, label="cutArr (Z)")
-plt.axvline(T[intvalTimeStart], color = 'g', ymin= 0.15, ymax=0.85)
-plt.axvline(T[intvalTimeStop], color = 'g', ymin= 0.15, ymax=0.85)
+#plt.axvline(cutPacks[intvalTimeStart], color = 'g', ymin= 0.15, ymax=0.85)
+#plt.axvline(cutPacks[intvalTimeStop], color = 'g', ymin= 0.15, ymax=0.85)
 
 
 plt.xlabel('seconds')
