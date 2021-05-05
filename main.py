@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+#from mpl_toolkits import mplot3d
 from mpl_toolkits.mplot3d import axes3d
 import numpy as np
 import math
@@ -13,6 +14,8 @@ eulerArray = subject.LAeulerArray
 rotationArray = subject.LArotationArray
 dataQt = subject.LAquaternionArray
 dtimeArray = dataTime[:,0]
+neckArray = subject.NcalArray
+nEulArray = subject.NeulerArray
 
 #plt.figure(1)
 #plt.plot(eulerArray[:,0], eulerArray[:,1], label='x/phi')
@@ -118,15 +121,30 @@ indexes = []                                                            #Find th
 for packet in dataSelection:
     indexes.append(np.where(dataArray[:,0] == packet))
 
+tempArr = []                                                            #identifying knocks on IMU (neck)
+knPoints = [0]
+MS = stat.mean(neckArray[:,6])
+print(MS)
+for i in range(len(neckArray)):
+    if( neckArray[i,6] > 4*math.sqrt(MS**2)):
+        tempArr.append(neckArray[i,0])
+        if (tempArr[len(tempArr)-1] > (knPoints[len(knPoints)-1]+5*sampleFrekvens)):
+            knPoints.append(tempArr[len(tempArr)-1])
 
     #Decide which session to make calculations on:
-startSession = 5
-stopSession = 6
+startSession = 4
+stopSession = 5
 cutPacks = dataArray[int(indexes[startSession][0]):int(indexes[stopSession][0]),0]           #Cut out an array during a walking trial S4 4-5, S12 5-6
 
 cutYArr = dataArray[int(indexes[startSession][0]):int(indexes[stopSession][0]),5]   #5 accY
 cutXArr = dataArray[int(indexes[startSession][0]):int(indexes[stopSession][0]),4]   #4
 cutZArr = dataArray[int(indexes[startSession][0]):int(indexes[stopSession][0]),6] 
+
+cutXdeg = dataArray[int(indexes[startSession][0]):int(indexes[stopSession][0]),1]
+cutYdeg = dataArray[int(indexes[startSession][0]):int(indexes[stopSession][0]),2]
+cutZdeg = dataArray[int(indexes[startSession][0]):int(indexes[stopSession][0]),3]
+
+cutEul = eulerArray[int(indexes[startSession][0]):int(indexes[stopSession][0]),:]
 
     #Timeconversion of betingelse starting at 0:
 for i in range(0, len(dtimeArray)):
@@ -155,7 +173,7 @@ else:
         #Calculations
 fqArray = []
 stpFreq = []
-print("Mean = " + str(stat.fmean(cutXArr)))                                     #Visual checker to see that following algorithm is plaussible
+print("Mean = " + str(stat.mean(cutXArr)))                                     #Visual checker to see that following algorithm is plaussible
 
 pointsInInterval = T[intvalTimeStart:intvalTimeStop][np.nonzero(cutXArr[intvalTimeStart:intvalTimeStop] > 0.4*stat.mean(cutXArr))]     #(experimental "top" value)
 fqArray.append(pointsInInterval[0])
@@ -172,11 +190,23 @@ for i in range(1, len(pointsInInterval)):
 print('During '+ str(fqArray[len(stpFreq)]-fqArray[0]) + ' s in the interval of '+ str(fqArray[0]) + '-' + str(fqArray[len(stpFreq)]) + ', '+ str(len(stpFreq)) + ' steps were made with an average step frequency of ' + str(stat.mean(stpFreq)) + ' Hz')
 print('Sample standard diviation: ' + str(stat.stdev(stpFreq)) + ' Hz')             #Sample standard deviation of data
 
+frekvensA = []
+steg = []
+
+for i in range(intvalTimeStart,intvalTimeStop-1):
+    if (cutZdeg[i+1]-cutZdeg[i] > -0.12 and cutZdeg[i+1]-cutZdeg[i] < 0.12 ):
+        frekvensA.append(T[i])
+        if (len(frekvensA) >= 2):
+            steg.append(1/(T[i]-frekvensA[len(frekvensA)-2]))
+
+print(steg)
+print(len(steg))
+print(frekvensA)
 print('calculating acceleration vector')
 cutEu = eulerArray[int(indexes[startSession][0]):int(indexes[stopSession][0]),:]
 cutRot = rotationArray[int(indexes[startSession][0]):int(indexes[stopSession][0]),:]
 aList = [np.array([[0], [0], [0]])]
-c = 1
+c = 5
 #for c in range(1,len(fqArray)):
 gaitTime = []
 for i in range(math.floor((len(cutPacks)/sessionTime)*fqArray[c-1]),math.floor((len(cutPacks)/sessionTime)*fqArray[c])):
@@ -192,14 +222,14 @@ print('done!')
 print('calculating velocity and position vectors')
 vList = [np.array([[0], [0], [0]])]
 pList = [np.array([[0], [0], [0]])]
-v_e = 0
-p_e = 0
-for i in range(len(aList) - 2):
-    v_e += ((aList[i] + aList[i-1])/2) * dt
+v_e = [np.array([[0], [0], [0]])]
+p_e = [np.array([[0], [0], [0]])]
+for i in range(1, len(aList)-1):
+    v_e =  ((aList[i] + aList[i-1])/2) * dt
     vList.append(v_e)
     #print(v_e)
 
-    p_e = ((vList[-1] + vList[-2])/2) * dt
+    p_e =  ((vList[i] + vList[i-1])/2) * dt
     pList.append(p_e)
 print('done!')
 p_xList = []
@@ -215,20 +245,29 @@ plt.figure(2)
 plt.plot(gaitTime, p_xList)
 plt.title("vertical foot movement")
 #plt.show()
-print(p_xList)
-print(p_zList)
-#print(len(xGait))
-#print(gait)
+#print(p_xList)
+#print(p_yList)
+#print(p_zList)
   
     #Plotting:
-#plt.figure(3)
-#for i in range(0,len(fqArray)):
-#    plt.axvline((cutPacks[math.floor((len(cutPacks)/sessionTime)*fqArray[i])]), color = 'r', ymin= 0.15, ymax=0.85)   #Plot for whole or cutPacks
-    #plt.axvline(fqArray[i], color = 'r', ymin= 0.15, ymax=0.85)                        #Plot for x-axis = T
-#plt.plot(dataArray[:,0], dataArray[:,4], label="X")                                    #Print whole dataArray
+x = 1
+y = 2
+z = 3
+plt.figure(3)
+for i in range(0,len(fqArray)):
+    #plt.axvline((cutPacks[math.floor((len(cutPacks)/sessionTime)*fqArray[i])]), color = 'r', ymin= 0.15, ymax=0.85)   #Plot for whole or cutPacks
+    plt.axvline(fqArray[i], color = 'r', ymin= 0.15, ymax=0.85)                        #Plot for x-axis = T
+for i in range(0,len(frekvensA)):
+    plt.axvline(frekvensA[i], color='k', ymin= 0.15, ymax=0.85)
+#plt.plot(eulerArray[:,0], eulerArray[:,x], label="X")                                    #Print whole dataArray
+#plt.plot(eulerArray[:,0], eulerArray[:,y], label="Y")
+#plt.plot(eulerArray[:,0], eulerArray[:,z], label="Z")
 #for i in range(0,len(dataSelection)):
-#       plt.axvline(dataSelection[i], color = 'r', ymin= 0.25, ymax=0.75)
+#       plt.axvline(dataSelection[i], color = 'm', ymin= 0.25, ymax=0.75)
+#for i in range(0,len(knPoints)):
+#       plt.axvline(knPoints[i], color = 'k', ymin= 0.25, ymax=0.75)
 
+plt.title("Accelorometre")
 #plt.plot(quaterions[:,0], roll, label="Roll|Phi|X(degree)")
 #plt.plot(quaterions[:,0], pitch, label="Pitch|Theta|Y(degree)")
 #plt.plot(quaterions[:,0], yaw, label="Yaw|Psi|Z(degree")
@@ -237,15 +276,35 @@ print(p_zList)
 #plt.plot(T, yaw, label="Yaw|Psi|Z(degree")
 #plt.plot(T, cutXMag, label = "Mag X" )
 #plt.plot(T, cutXArr, label="cutArr (X)")
-#plt.plot(T, cutYArr, label="cutArr (Y)")                 #Bäst att detektera/se gait
-#plt.plot(T, cutZArr, label="cutArr (Z)")
+#plt.plot(T, cutYArr, label="cutArr (Y)")                 
+plt.plot(T, cutZArr, label="cutArr (Z)")
+plt.legend()
 #plt.axvline(cutPacks[intvalTimeStart], color = 'g', ymin= 0.15, ymax=0.85)
 #plt.axvline(cutPacks[intvalTimeStop], color = 'g', ymin= 0.15, ymax=0.85)
-#ax = plt.axes(projection='3d')
-#ax.scatter3D(gait, yGait, zGait, c=gait, cmap='Greens');
-#plt.title('Gait movement')
-
-plt.xlabel('seconds')
-plt.ylabel('value')
+plt.figure(5)
+#for i in range(0,len(knPoints)):
+#       plt.axvline(knPoints[i], color = 'k', ymin= 0.25, ymax=0.75)
+for i in range(0,len(fqArray)):
+    #plt.axvline((cutPacks[math.floor((len(cutPacks)/sessionTime)*fqArray[i])]), color = 'r', ymin= 0.15, ymax=0.85)   #Plot for whole or cutPacks
+    plt.axvline(fqArray[i], color = 'r', ymin= 0.15, ymax=0.85)
+for i in range(0,len(frekvensA)):
+    plt.axvline(frekvensA[i], color='k', ymin= 0.15, ymax=0.85)
+#plt.plot(T, cutXdeg, label="x")
+#plt.plot(T, cutYdeg, label="y")
+plt.plot(T, cutZdeg, label="z")
+#print(dataSelection)
+#print(knPoints)
+#plt.plot(nEulArray[:,0], nEulArray[:,x], label="X")                          
+#plt.plot(nEulArray[:,0], nEulArray[:,y], label="Y")
+#plt.plot(nEulArray[:,0], nEulArray[:,z], label="Z")
+plt.title("Angularvelocity")
 plt.legend()
+plt.figure(4)
+ax = plt.axes(projection='3d')
+ax.scatter3D(p_xList, p_yList, p_zList);
+plt.title('Gait movement')
+#plt.xlabel('seconds')
+#plt.ylabel('value')
+plt.figure(8)
+plt.plot(dataArray[:,0], dataArray[:,4])
 plt.show()

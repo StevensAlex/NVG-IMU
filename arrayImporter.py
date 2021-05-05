@@ -8,8 +8,9 @@ class Subject():
     def __init__(self):
         root = tk.Tk()
         root.withdraw()
-        path = str(filedialog.askdirectory())
-        if (str(path) != ''):
+        try:
+            path = str(filedialog.askdirectory())
+        #if (str(path) != ''):
             files = os.listdir(path)
             #import IMU's being used
             print("Loading data, this may take a while")
@@ -78,3 +79,5 @@ class Subject():
                 self.NquaternionArray = np.genfromtxt(NquaterionsPath, delimiter=',', skip_header=1)
                 print("Loading N-600 complete!")
             print("Loading complete!")
+        except FileNotFound as err:
+            print("loading failed")
