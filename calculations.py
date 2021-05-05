@@ -1,14 +1,14 @@
 import numpy as np
 import math
 import arrayHandler as arrH
+import statistics as stat
 
 class Calculations():
     def _init_(self):
         print("hej")
 
     def betDetection(self, startIndex, stopIndex):
-        dataArray = arrH.getArray(self, "dataArray")
-        print("betDet")
+        dataArray = arrH.DataArrays.getArray(self, "dataArray")
         def getPoints(dataArray, RMS):
             packets = []
             points = dataArray[startIndex:stopIndex,0][np.nonzero(dataArray[startIndex:stopIndex,6] > 2.4*RMS)]           #Assign acc(Z)Value > 1.7xRMS to corrresponding packet
@@ -17,23 +17,25 @@ class Calculations():
                     packets.append(points[i])
             return packets
         
-        sampleFrekvens = arrH.getDataRate(dataArrays.getArray(self, "dataRegist")[69,2])             #DataRate for inertia and mag
-        aproxSekvensTime = 6
+        sampleFrekvens = arrH.DataArrays.getDataRate(arrH.DataArrays.getArray(self, "dataRegist")[69,2])             #DataRate for inertia and mag
+        aproxSekvensTime = 3
         dataSelection = []
         Square = 0
 
-        for i in range(startIndex,stopIndex):
+        for i in range(0,len(dataArray)):
             Square += dataArray[i,6]**2
-        RMS = math.sqrt(Square/(stopIndex-startIndex))
-        print(RMS)
+        RMS = math.sqrt(Square/len(dataArray))
 
         packets = getPoints(dataArray, RMS)
-        print(packets)
         for i in range(1, len(packets)-1):                                      #Remove nearby packets and remain with farends of "packet-group"
-            if packets[i] - packets[i-1] > aproxSekvensTime*sampleFrekvens*50:
+            if( i == 1 and (packets[i] - packets[i-1] < aproxSekvensTime*sampleFrekvens*50)):
+                dataSelection.append(packets[0])
+            elif( packets[i] - packets[i-1] > aproxSekvensTime*sampleFrekvens*50):
                 dataSelection.append(packets[i])
-            elif packets[i+1] - packets[i] > aproxSekvensTime*sampleFrekvens*50:
+            elif( packets[i+1] - packets[i] > aproxSekvensTime*sampleFrekvens*50):
                 dataSelection.append(packets[i])
+            elif( i == (len(packets)-2) and (packets[i+1] - packets[i] < aproxSekvensTime*sampleFrekvens*50)):
+                dataSelection.append(packets[i+1])
 
         print(dataSelection)
         indexes = []
@@ -41,11 +43,24 @@ class Calculations():
             indexes.append(np.where(dataArray[:,0] == packet))
         return indexes
 
-    def stepFrequency(self, intvalTimeStart, intvalTimeStop):
+    def stepFrequency(self, startSek, stopSek, indexStart, indexStop):
         fqArray = []
         stpFreq = []
+        T = arrH.DataArrays.timeConversion(self,"dataArray",indexStart,indexStop)
+        cutXArr = arrH.DataArrays.getArray(self, "dataArray")[indexStart:indexStop, 4]
+        #cutXArr = dataArray[indexStart:indexStop, 4]
+        if (startSek > 0):
+            intvalTimeStart = math.floor((len(cutXArr)/(T[len(T)-1]-T[0]))*(startSek-1))
+        else:
+            intvalTimeStart = math.floor((len(cutXArr)/(T[len(T)-1]-T[0]))*(startSek))
+        if (stopSek < T[len(T)-1]-5):
+            intvalTimeStop = math.floor((len(cutXArr)/(T[len(T)-1]-T[0]))*(stopSek+5))
+        else:
+            intvalTimeStop = math.floor((len(cutXArr)/(T[len(T)-1]-T[0]))*(stopSek))
+        
+       
         print("Mean = " + str(stat.mean(cutXArr)))                                     #Visual checker to see that following algorithm is plaussible
-
+        
         pointsInInterval = T[intvalTimeStart:intvalTimeStop][np.nonzero(cutXArr[intvalTimeStart:intvalTimeStop] > 0.4*stat.mean(cutXArr))]     #(experimental "top" value)
         fqArray.append(pointsInInterval[0])
         for i in range(1, len(pointsInInterval)):
@@ -58,6 +73,5 @@ class Calculations():
                         fqArray.remove(fqArray[0])
                         stpFreq.remove(stpFreq[0]) 
 
-        print('During '+ str(fqArray[len(stpFreq)]-fqArray[0]) + ' s in the interval of '+ str(fqArray[0]) + '-' + str(fqArray[len(stpFreq)]) + ', '+ str(len(stpFreq)) + ' steps were made with an average step frequency of ' + str(stat.mean(stpFreq)) + ' Hz')
-        print('Sample standard diviation: ' + str(stat.stdev(stpFreq)) + ' Hz')             #Sample standard deviation of data
+        return stpFreq
 

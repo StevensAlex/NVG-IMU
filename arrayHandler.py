@@ -42,15 +42,15 @@ class DataArrays():
         return switcher.get(argument, 0)
 
     def timeConversion(self, argument, startSession, stopSession):  #Timeconversion from packets of selected arraylength starting at 0:
-        packetArr = dataArrays.getArray(self,argument)
+        packetArr = DataArrays.getArray(self,argument)
         if (argument == "dataArray" or argument == "eulerArray"):
-            timeArray = dataArrays.getArray(self,"dataTime")
-            register = dataArrays.getArray(self, "dataRegist")
+            timeArray = DataArrays.getArray(self,"dataTime")
+            register = DataArrays.getArray(self, "dataRegist")
         elif (argument == "neckArray" or argument == "nEulArray"):
-            timeArray = dataArrays.getArray(self,"neckTime")
-            register = dataArrays.getArray(self, "neckRegister")
+            timeArray = DataArrays.getArray(self,"neckTime")
+            register = DataArrays.getArray(self, "neckRegister")
 
-        sampleFrekvens = dataArrays.getDataRate(register[69,2])                 #position in register for data rate acquisition
+        sampleFrekvens = DataArrays.getDataRate(register[69,2])                 #position in register for data rate acquisition
         if (startSession <= 0):
             timeStart = timeArray[0, 4]*3600 + timeArray[0, 5]*60 + timeArray[0, 6]
         else:
@@ -89,8 +89,8 @@ class DataArrays():
         return switcher.get(argument, 0)
 
     def getIndexFromTime(self, argument, time):
-        packetArr = dataArrays.getArray(self,argument)
-        sessionTime = dataArrays.timeConversion(self,"dataArray",0,(len(packetArr)))[(len(packetArr)-1)]        #Total trial time
+        packetArr = DataArrays.getArray(self,argument)
+        sessionTime = DataArrays.timeConversion(self,"dataArray",0,(len(packetArr)))[(len(packetArr)-1)]        #Total trial time
         if(time <= 0):
             time = 0
         if(time >= sessionTime):
