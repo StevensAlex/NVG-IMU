@@ -5,8 +5,27 @@ import statistics as stat
 
 class Calculations():
     def _init_(self):
-        print("hej")
+        self.startTime = 0
+        self.stopTime = 0
+        self.dataArr = np.array([0])
+        self.timeArr = np.array([0])
 
+    def setDataArray(self, startSek, stopSek, indexStart, indexStop):
+        T = arrH.DataArrays.timeConversion(self,"dataArray",indexStart,indexStop)
+        cutArr = arrH.DataArrays.getArray(self, "dataArray")[indexStart:indexStop, :]
+        if (startSek > 0):
+            intvalTimeStart = math.floor((len(cutArr)/(T[len(T)-1]-T[0]))*(startSek-1))
+        else:
+            intvalTimeStart = math.floor((len(cutArr)/(T[len(T)-1]-T[0]))*(startSek))
+        if (stopSek < T[len(T)-1]-5):
+            intvalTimeStop = math.floor((len(cutArr)/(T[len(T)-1]-T[0]))*(stopSek+5))
+        else:
+            intvalTimeStop = math.floor((len(cutArr)/(T[len(T)-1]-T[0]))*(stopSek))
+        self.startTime = startSek
+        self.stopTime = stopSek
+        self.dataArr = cutArr[intvalTimeStart:intvalTimeStop,:]
+        self.timeArr = T[intvalTimeStart:intvalTimeStop]
+        
     def betDetection(self, startIndex, stopIndex):
         dataArray = arrH.DataArrays.getArray(self, "dataArray")
         def getPoints(dataArray, RMS):
@@ -25,6 +44,7 @@ class Calculations():
         for i in range(0,len(dataArray)):
             Square += dataArray[i,6]**2
         RMS = math.sqrt(Square/len(dataArray))
+        print(RMS)
 
         packets = getPoints(dataArray, RMS)
         for i in range(1, len(packets)-1):                                      #Remove nearby packets and remain with farends of "packet-group"
@@ -38,30 +58,24 @@ class Calculations():
                 dataSelection.append(packets[i+1])
 
         print(dataSelection)
+        if( len(dataSelection) > 2):
+            for i in range(1,(len(dataSelection)-1)):
+                if( dataSelection[i]-dataSelection[i-1] < aproxSekvensTime*sampleFrekvens*80):
+                    dataSelection.remove(dataSelection[i-1])
         indexes = []
         for packet in dataSelection:
             indexes.append(np.where(dataArray[:,0] == packet))
         return indexes
 
-    def stepFrequency(self, startSek, stopSek, indexStart, indexStop):
+    def stepFrequency(self):
         fqArray = []
         stpFreq = []
-        T = arrH.DataArrays.timeConversion(self,"dataArray",indexStart,indexStop)
-        cutXArr = arrH.DataArrays.getArray(self, "dataArray")[indexStart:indexStop, 4]
-        #cutXArr = dataArray[indexStart:indexStop, 4]
-        if (startSek > 0):
-            intvalTimeStart = math.floor((len(cutXArr)/(T[len(T)-1]-T[0]))*(startSek-1))
-        else:
-            intvalTimeStart = math.floor((len(cutXArr)/(T[len(T)-1]-T[0]))*(startSek))
-        if (stopSek < T[len(T)-1]-5):
-            intvalTimeStop = math.floor((len(cutXArr)/(T[len(T)-1]-T[0]))*(stopSek+5))
-        else:
-            intvalTimeStop = math.floor((len(cutXArr)/(T[len(T)-1]-T[0]))*(stopSek))
+        cutXArr = self.dataArr[:,4]
+        T = self.timeArr[:]
+        startSek = self.startTime
+        stopSek = self.stopTime
         
-       
-        print("Mean = " + str(stat.mean(cutXArr)))                                     #Visual checker to see that following algorithm is plaussible
-        
-        pointsInInterval = T[intvalTimeStart:intvalTimeStop][np.nonzero(cutXArr[intvalTimeStart:intvalTimeStop] > 0.4*stat.mean(cutXArr))]     #(experimental "top" value)
+        pointsInInterval = T[np.nonzero(cutXArr > 0.4*stat.mean(cutXArr))]              #(experimental "top" value)
         fqArray.append(pointsInInterval[0])
         for i in range(1, len(pointsInInterval)):
             if ( (pointsInInterval[i] - (pointsInInterval[0]+(stopSek-startSek)) < ((pointsInInterval[0]+(stopSek-startSek))-fqArray[len(fqArray)-1])) and (pointsInInterval[i]-fqArray[len(fqArray)-1]) > 0.61):   #(experimental time value)
@@ -69,7 +83,7 @@ class Calculations():
                 if (len(fqArray) >= 2):
                     stpFreq.append(1/(pointsInInterval[i]-fqArray[len(fqArray)-2]))       #Converted to Hz (step/second)
                 if (len(stpFreq) == 2):
-                    if (stpFreq[0] > 1.4*stpFreq[1]):                                       #Remove intitial step that is too short (experimental frequency value)
+                    if (stpFreq[0] > 1.4*stpFreq[1]):                                     #Remove intitial step that is too short (experimental frequency value)
                         fqArray.remove(fqArray[0])
                         stpFreq.remove(stpFreq[0]) 
 
