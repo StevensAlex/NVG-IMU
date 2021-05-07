@@ -17,6 +17,8 @@ class GUI:
         window.minsize(400,600)
         #window.geometry()
         
+        self.indexStart=0
+        self.indexStop=0
         self.total_steps = 0
         self.step_frequency =0
         self.stdv_steps =0
@@ -31,7 +33,7 @@ class GUI:
         self.heightText1 = tk.StringVar(window)
         self.heightText2 = tk.StringVar(window)
         self.lengthText = tk.StringVar(window)
-        self.updateValues(self, self.total_steps,self.step_frequency,self.stdv_steps,self.step_height,self.max_height,self.min_height,self.step_length,self.stdv_length)
+        self.updateValues(self.total_steps,self.step_frequency,self.stdv_steps,self.step_height,self.stdv_height,self.max_height,self.min_height,self.step_length,self.stdv_length)
         self.stepsLabel = tk.Label(window, textvariable=self.stepsText, font=("Arial", 11)).place(x=35,y=150)
         self.frequencyLabel = tk.Label(window,textvariable=self.frequencyText,font=("Arial", 11)).place(x=35,y=170)
         self.heightLabel1 = tk.Label(window,textvariable=self.heightText1,font=("Arial", 11)).place(x=35,y=230)
@@ -57,8 +59,8 @@ class GUI:
         tk.Label(text="Tidsinterval:",font=("Arial", 10)).place(x=30, y=65)
         self.t1String = tk.StringVar(window)
         self.t2String = tk.StringVar(window)
-        self.t1 = tk.Entry(window, textvariable=self.t1String, width=6, bg="yellow", font=("Arial", 11)).place(x=35, y=85)          #change to beige-gray instead of yellow
-        self.t2 = tk.Entry(window, textvariable=self.t2String, width=6, bg="yellow", font=("Arial", 11)).place(x=90, y=85)
+        self.t1 = tk.Entry(window, textvariable=self.t1String, width=6, bg='#FDF0CC', font=("Arial", 11)).place(x=35, y=85)          #change to beige-gray instead of yellow
+        self.t2 = tk.Entry(window, textvariable=self.t2String, width=6, bg='#FDF0CC', font=("Arial", 11)).place(x=90, y=85)
         
         tk.Button(
             window,
@@ -108,38 +110,44 @@ class GUI:
         self.lengthText.set('Medellängd ' + f"{str(self.step_length)+ ' m':<18}" + '  Stdv ' + f"{str(self.stdv_length)+ ' m':<18}")
 
     def enterData(self):
-        subject = imp.Subject()
-        if subject != UnboundLocalError:
+        try:
+            subject = imp.Subject()
             arrH.DataArrays.setArrays(self,subject)
             tk.Label(window, text="Laddat",font=("Arial", 8)).place(x=55,y=50)
             messagebox.showinfo("Notification","Datat har laddat färdigt!")
-        else:
-            messagebox.showerror("Notification","Datat kunde inte laddas!")
+        except:
+            messagebox.showerror("Notification","Datat kunde inte laddas! \nFörsök igen!")
 
     def enterBet(self):
-        arrLA = arrH.DataArrays.getArray(self,"dataArray")
-        arrN = arrH.DataArrays.getArray(self, "neckArray")
-        self.fig, self.ax = plt.subplots()
-        if (len(arrLA) >= len(arrN)):
-            time = arrH.DataArrays.timeConversion(self,"dataArray",0,(len(arrLA)))
-            newArr = np.zeros((len(arrLA)), dtype = float)
-            for i in range(len(arrN)):
-                newArr[i] = arrN[i,5]
-            self.ax.plot(time, arrLA[:,5],label="LA-y")
-        else:
-            time = arrH.DataArrays.timeConversion(self,"neckArray",0,(len(arrN)))
-            newArr = np.zeros((len(arrN)), dtype = float)
-            for i in range(len(arrLA)):
-                newArr[i] = arrLA[i,5]
-            self.ax.plot(time, arrN[:,5],label="N-y")
-        self.ax.plot(time, newArr,label="acc-y")
+        try:
+            arrLA = arrH.DataArrays.getArray(self,"dataArray")
+            arrN = arrH.DataArrays.getArray(self, "neckArray")
+            self.fig, self.ax = plt.subplots()
+            if (len(arrLA) >= len(arrN)):
+                time = arrH.DataArrays.timeConversion(self,"dataArray",0,(len(arrLA)))  #tillfälligt från y till z
+                newArr = np.zeros((len(arrLA)), dtype = float)
+                for i in range(len(arrN)):
+                    newArr[i] = arrN[i,5]
+                self.ax.plot(time, arrLA[:,5],label="LA-y")
+            else:
+                time = arrH.DataArrays.timeConversion(self,"neckArray",0,(len(arrN)))
+                newArr = np.zeros((len(arrN)), dtype = float)
+                for i in range(len(arrLA)):
+                    newArr[i] = arrLA[i,5]
+                self.ax.plot(time, arrN[:,5],label="N-y")
+            self.ax.plot(time, newArr,label="acc-y")
 
-        lineprops = {'color': 'red','linewidth': 4, 'alpha': 0.8}
-        self.lasso = LassoSelector(self.ax, onselect = self.onSelect, lineprops= lineprops, button=1)
-        self.fig.canvas.mpl_connect("key_press_event", self.accept)
-        self.ax.set_title("Press enter to accept selected points.")
-        plt.legend()
-        plt.show()
+            self.minP = 0
+            self.maxP = 0
+            lineprops = {'color': 'red','linewidth': 4, 'alpha': 0.8}
+            self.lasso = LassoSelector(self.ax, onselect = self.onSelect, lineprops= lineprops, button=1)
+            self.fig.canvas.mpl_connect("key_press_event", self.accept)
+            self.ax.set_title("Press enter to accept selected points.")
+            plt.legend()
+            plt.show()
+        except:
+            messagebox.showwarning("Notification", "Ingen fil är annu inläst!")
+
 
     def onSelect(self,xy):
         dtype = [('x', float), ('y', float)]
@@ -152,48 +160,58 @@ class GUI:
 
     def accept(self, event):
         if event.key == "enter":
-            dataLen = arrH.DataArrays.getArray(self,"dataArray")                      #kontroll
-            start = arrH.DataArrays.getIndexFromTime(self,"dataArray",self.minP)
-            stopp = arrH.DataArrays.getIndexFromTime(self,"dataArray",self.maxP)
-            self.lasso.disconnect_events()
-            self.ax.set_title("")
-            plt.close('all')
-            #indexes = np.arange(start,stopp)
-            #plt.plot(indexes, dataLen[start:stopp,5])                           #Temporär kontroll
-            #plt.show()
-            if( (stopp > start ) and (stopp > 0 )):
-                self.betArr = calc.Calculations.betDetection(self, start, stopp)
-                print(self.betArr)
-                print("längden " + str(len(self.betArr)))
-                if(len(self.betArr)>=2):
-                    cutTime = arrH.DataArrays.timeConversion(self,"dataArray",int(self.betArr[0][0]),int(self.betArr[1][0]))          
-                    indexes = np.arange(int(self.betArr[0][0]),int(self.betArr[1][0]))
-                    #plt.plot(indexes,dataLen[int(self.betArr[0][0]):int(self.betArr[1][0]),5])
-                    #plt.show()
-                    self.indexStart = int(self.betArr[0][0])
-                    self.indexStop = int(self.betArr[1][0])
-                    if len(self.betArr) > 2:
-                        messagebox.showinfo("Notification", "Mer än en betingelse detekterades! \nBeräknar på första. Om osäker på vilken det är,\nvänligen välj ny betingelse.")
-                    self.t1String.set(cutTime[0])
-                    self.t2String.set(cutTime[(len(cutTime)-1)])
+            #dataLen = arrH.DataArrays.getArray(self,"dataArray")                      #kontroll
+            if (self.minP >= 0 and self.maxP>0):
+                start = arrH.DataArrays.getIndexFromTime(self,"dataArray",self.minP)
+                stopp = arrH.DataArrays.getIndexFromTime(self,"dataArray",self.maxP)
+                self.lasso.disconnect_events()
+                self.ax.set_title("")
+                plt.close('all')
+                #indexes = np.arange(start,stopp)
+                #plt.plot(indexes, dataLen[start:stopp,5])                           #Temporär kontroll
+                #plt.show()
+                if( (stopp > start ) and (stopp > 0 )):
+                    self.betArr = calc.Calculations.betDetection(self, start, stopp)
+                    print(self.betArr)
+                    print("längden " + str(len(self.betArr)))
+                    if(len(self.betArr)>=2):
+                        cutTime = arrH.DataArrays.timeConversion(self,"dataArray",int(self.betArr[0][0]),int(self.betArr[1][0]))          
+                        indexes = np.arange(int(self.betArr[0][0]),int(self.betArr[1][0]))
+                        #plt.plot(indexes,dataLen[int(self.betArr[0][0]):int(self.betArr[1][0]),5])
+                        #plt.show()
+                        self.indexStart = int(self.betArr[0][0])
+                        self.indexStop = int(self.betArr[1][0])
+                        if len(self.betArr) > 2:
+                            messagebox.showinfo("Notification", "Mer än en betingelse detekterades! \nBeräknar på första. Om osäker på vilken det är,\nvänligen välj ny betingelse.")
+                        self.t1String.set(cutTime[0])
+                        self.t2String.set(cutTime[(len(cutTime)-1)])
+                    else:
+                        messagebox.showwarning("Notification", "Ingen data detekterades, \nvänligen försök igen!")
+                        self.t1String.set(' ')
+                        self.t2String.set(' ')
                 else:
-                    messagebox.showwarning("Notification", "Ingen data detekterades, \nvänligen försök igen!")
-            else:
-                messagebox.showwarning("Notification", "Ingen korrekt markering av data gjordes!")
+                    messagebox.showwarning("Notification", "Ingen korrekt markering av data gjordes!")
+                    self.t1String.set(' ')
+                    self.t2String.set(' ')
    
     def runCalc(self):
-        #try:
-        t1 = float(self.t1String.get())
-        t2 = float(self.t2String.get())
-        if(t2>t1 and t1 >= 0):
-            calc.Calculations.setDataArray(self,t1,t2, self.indexStart,self.indexStop)
-            stepsArr = calc.Calculations.stepFrequency(self)
-            self.total_steps = len(stepsArr)
-            self.step_frequency = stat.mean(stepsArr)
-            self.stdv_steps = stat.stdev(stepsArr)
-        #except:
-        #    print("ojoj")
-        self.updateValues(self, self.total_steps,self.step_frequency,self.stdv_steps,self.step_height,self.max_height,self.min_height,self.step_length,self.stdv_length)
+        try:
+            t1 = float(self.t1String.get())
+            t2 = float(self.t2String.get())
+            if(t2>t1 and t1 >= 0 and self.indexStart>=0 and self.indexStop>self.indexStart):
+                calc.Calculations.setDataArray(self,t1,t2, self.indexStart,self.indexStop)
+                #Temporärt utseende
+                stepsArr = calc.Calculations.stepFrequency(self)
+                self.total_steps = len(stepsArr)
+                self.step_frequency = stat.mean(stepsArr)
+                self.stdv_steps = stat.stdev(stepsArr)
+            elif(t1>t2):
+                messagebox.showinfo("Notification", "Starttiden kan inte vara större än sluttiden!")
+            else:
+                messagebox.showinfo("Notification", "Ingen data är tillgänglig! \nVänligen kontrollera att filer är \nimporterade och betingelse är vald.")
+        except:
+            messagebox.showinfo("Notification", "Fönstrena tar bara emot siffror! \nKontrollera att inget tecken kom med och försök igen.")
+        self.updateValues(self.total_steps, self.step_frequency, self.stdv_steps, self.step_height, self.stdv_height,self.max_height,self.min_height,self.step_length,self.stdv_length)
 
     def plot2d(self):   #Not yet done
         print("2D")
@@ -207,10 +225,11 @@ class GUI:
 
     def saveToFile(self):
         print(self.comment.get())
-        fN = imp.Subject.getFileName(self)
-        print(fN)
+        #fN = imp.Subject.getFileName(self)
+        #print(fN)
         #csv.register_dialect('myDialect', delimiter='/', quoting=csv.QUOTE_NONE)
-        #myData = ['Good Morning', 'Good Evening', 'Good Afternoon']
+        myData = [self.t1String.get(), self.t2String.get(), str(self.total_steps), str(self.step_frequency), str(self.stdv_steps),str(self.step_height), str(self.stdv_height), str(self.max_height),str(self.min_height),str(self.step_length),str(self.stdv_length)]
+        print(myData)
         #myFile = open('resultat.csv', 'w')
         #with myFile:
         #    writer = csv.writer(myFile, dialect='myDialect')

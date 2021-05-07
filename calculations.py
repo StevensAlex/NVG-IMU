@@ -30,7 +30,7 @@ class Calculations():
         dataArray = arrH.DataArrays.getArray(self, "dataArray")
         def getPoints(dataArray, RMS):
             packets = []
-            points = dataArray[startIndex:stopIndex,0][np.nonzero(dataArray[startIndex:stopIndex,6] > 2.4*RMS)]           #Assign acc(Z)Value > 1.7xRMS to corrresponding packet
+            points = dataArray[startIndex:stopIndex,0][np.nonzero(dataArray[startIndex:stopIndex,5] > 2.4*RMS)]           #Assign acc(Z)Value > 1.7xRMS to corrresponding packet
             for i in range (1,points.size):                                         #Assign packets that lies withing sf/2,
                 if points[i]-points[i-1] < sampleFrekvens/2:
                     packets.append(points[i])
@@ -42,7 +42,7 @@ class Calculations():
         Square = 0
 
         for i in range(0,len(dataArray)):
-            Square += dataArray[i,6]**2
+            Square += dataArray[i,5]**2
         RMS = math.sqrt(Square/len(dataArray))
         print(RMS)
 
@@ -50,21 +50,24 @@ class Calculations():
         for i in range(1, len(packets)-1):                                      #Remove nearby packets and remain with farends of "packet-group"
             if( i == 1 and (packets[i] - packets[i-1] < aproxSekvensTime*sampleFrekvens*50)):
                 dataSelection.append(packets[0])
-            elif( packets[i] - packets[i-1] > aproxSekvensTime*sampleFrekvens*50):
+            elif( packets[i] - packets[i-1] > aproxSekvensTime*sampleFrekvens*20):
                 dataSelection.append(packets[i])
-            elif( packets[i+1] - packets[i] > aproxSekvensTime*sampleFrekvens*50):
+            elif( packets[i+1] - packets[i] > aproxSekvensTime*sampleFrekvens*20):
                 dataSelection.append(packets[i])
             elif( i == (len(packets)-2) and (packets[i+1] - packets[i] < aproxSekvensTime*sampleFrekvens*50)):
                 dataSelection.append(packets[i+1])
 
         print(dataSelection)
-        if( len(dataSelection) > 2):
+        if( len(dataSelection) >= 2):
             for i in range(1,(len(dataSelection)-1)):
-                if( dataSelection[i]-dataSelection[i-1] < aproxSekvensTime*sampleFrekvens*80):
+                if (i == (len(dataSelection)-1) and (dataSelection[i]-dataSelection[i-1]) < aproxSekvensTime*sampleFrekvens*150):
+                    dataSelection.remove(dataSelection[i])
+                elif( (dataSelection[i]-dataSelection[i-1]) < aproxSekvensTime*sampleFrekvens*120 ):
                     dataSelection.remove(dataSelection[i-1])
         indexes = []
-        for packet in dataSelection:
-            indexes.append(np.where(dataArray[:,0] == packet))
+        if( len(dataSelection) >=2):
+            for packet in dataSelection:
+                indexes.append(np.where(dataArray[:,0] == packet))
         return indexes
 
     def stepFrequency(self):
