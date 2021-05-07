@@ -6,24 +6,16 @@ class DataArrays():
         self.dataTime = np.array([0])
         self.dataRegist = np.array([0])
         self.dataArray = np.array([0])
-        self.eulerArray = np.array([0])
-        self.rotationArray = np.array([0])
-        self.dataQt = np.array([0])
         self.neckArray = np.array([0])
         self.neckTime = np.array([0])
-        self.nEulArray = np.array([0])
         self.neckRegister = np.array([0])
     
     def setArrays(self,subject):
         self.dataTime = subject.LAtimeArray
         self.dataRegist = subject.LAregArray
         self.dataArray = subject.LAcalArray
-        self.eulerArray = subject.LAeulerArray
-        self.rotationArray = subject.LArotationArray
-        self.dataQt = subject.LAquaternionArray
         self.neckArray = subject.NcalArray
         self.neckTime = subject.NtimeArray
-        self.nEulArray = subject.NeulerArray
         self.neckRegister = subject.NregArray
 
     def getArray(self,argument):
@@ -31,22 +23,18 @@ class DataArrays():
         "dataTime": self.dataTime,
         "dataRegist": self.dataRegist,
         "dataArray": self.dataArray,
-        "eulerArray": self.eulerArray,
-        "rotationArray": self.rotationArray,
-        "dataQt": self.dataQt,
         "neckArray": self.neckArray,
         "neckTime": self.neckTime,
-        "nEulArray": self.nEulArray,
         "neckRegister": self.neckRegister
         }
         return switcher.get(argument, 0)
 
     def timeConversion(self, argument, startSession, stopSession):  #Timeconversion from packets of selected arraylength starting at 0:
         packetArr = DataArrays.getArray(self,argument)
-        if (argument == "dataArray" or argument == "eulerArray"):
+        if (argument == "dataArray"): 
             timeArray = DataArrays.getArray(self,"dataTime")
             register = DataArrays.getArray(self, "dataRegist")
-        elif (argument == "neckArray" or argument == "nEulArray"):
+        elif (argument == "neckArray"):
             timeArray = DataArrays.getArray(self,"neckTime")
             register = DataArrays.getArray(self, "neckRegister")
 
@@ -55,13 +43,13 @@ class DataArrays():
             timeStart = timeArray[0, 4]*3600 + timeArray[0, 5]*60 + timeArray[0, 6]
         else:
             for i in range(0, len(timeArray)):
-                if( timeArray[i,0] <= (packetArr[startSession,0] + sampleFrekvens)):# and timeArray[i,0] >= (packetArr[startSession,0] - sampleFrekvens)):
+                if( timeArray[i,0] <= (packetArr[startSession,0] + sampleFrekvens)):
                     timeStart = timeArray[i, 4]*3600 + timeArray[i, 5]*60 + timeArray[i, 6]
         if (stopSession >= (len(packetArr)-1)):
             timeStop = timeArray[(len(timeArray)-1), 4]*3600 + timeArray[(len(timeArray)-1), 5]*60 + timeArray[(len(timeArray)-1), 6]
         else:
             for i in range(0, len(timeArray)):
-                if( timeArray[i,0] <= (packetArr[stopSession,0] + sampleFrekvens)):# and timeArray[i,0] >= (packetArr[stopSession,0] - sampleFrekvens)):
+                if( timeArray[i,0] <= (packetArr[stopSession,0] + sampleFrekvens)):
                     timeStop = timeArray[i, 4]*3600 + timeArray[i, 5]*60 + timeArray[i, 6]
         
         sessionTime = timeStop - timeStart

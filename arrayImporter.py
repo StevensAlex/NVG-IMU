@@ -33,19 +33,10 @@ class Subject():
                         LAregPath = LAPath + file
                     elif 'DateTime' in file:
                         LAtimePath = LAPath + file
-                    elif 'EulerAngles' in file:
-                        LAeulerPath = LAPath + file
-                    elif 'RotationMatrix' in file:
-                        LArotationPath = LAPath + file
-                    elif 'Quaternion' in file:
-                        LAquaterionsPath = LAPath + file
         
                 self.LAcalArray = np.genfromtxt(LAcalPath, delimiter=',', skip_header=1)
                 self.LAtimeArray = np.genfromtxt(LAtimePath, delimiter=',', skip_header=1)
                 self.LAregArray = np.genfromtxt(LAregPath, delimiter=',', skip_header=1)
-                self.LAeulerArray = np.genfromtxt(LAeulerPath, delimiter=',', skip_header=1)
-                self.LArotationArray = np.genfromtxt(LArotationPath, delimiter=',', skip_header=1)
-                self.LAquaternionArray = np.genfromtxt(LAquaterionsPath, delimiter=',', skip_header=1)
                 print("Loading LA-200 complete!")
 
             #N
@@ -65,23 +56,14 @@ class Subject():
                         NregPath = NPath + file
                     elif 'DateTime' in file:
                         NtimePath = NPath + file
-                    elif 'EulerAngles' in file:
-                        NeulerPath = NPath + file
-                    elif 'RotationMatrix' in file:
-                        NrotationPath = NPath + file
-                    elif 'Quaternion' in file:
-                        NquaterionsPath = NPath + file
         
                 self.NcalArray = np.genfromtxt(NcalPath, delimiter=',', skip_header=1)
                 self.NtimeArray = np.genfromtxt(NtimePath, delimiter=',', skip_header=1)
                 self.NregArray = np.genfromtxt(NregPath, delimiter=',', skip_header=1)
-                self.NeulerArray = np.genfromtxt(NeulerPath, delimiter=',', skip_header=1)
-                self.NrotationArray = np.genfromtxt(NrotationPath, delimiter=',', skip_header=1)
-                self.NquaternionArray = np.genfromtxt(NquaterionsPath, delimiter=',', skip_header=1)
                 print("Loading N-600 complete!")
             print("Loading complete!")
-        except FileNotFound as err:
-            print("loading failed")
+        except FileNotFoundError:
+            print("Loading failed!")
     
     def getFileName(self):
         name = self.path.get()

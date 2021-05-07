@@ -5,6 +5,12 @@ import numpy as np
 import math
 import arrayImporter as imp
 import statistics as stat
+import tkinter as tk
+import GUI
+
+#window = tk.Tk()
+#GUI(window)
+#window.mainloop()
 
 subject = imp.Subject()
 dataTime = subject.LAtimeArray
