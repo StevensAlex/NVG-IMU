@@ -9,10 +9,14 @@ class Calculations():
         self.stopTime = 0
         self.dataArr = np.array([0])
         self.timeArr = np.array([0])
+        self.dataArrays = arrH.DataArrays()
+
+    def setArrayHandler(self, dataArrays):
+        self.dataArrays = dataArrays
 
     def setDataArray(self, startSek, stopSek, indexStart, indexStop):
-        T = arrH.DataArrays.timeConversion(self,"dataArray",indexStart,indexStop)
-        cutArr = arrH.DataArrays.getArray(self, "dataArray")[indexStart:indexStop, :]
+        T = self.dataArrays.timeConversion("dataArray",indexStart,indexStop)
+        cutArr = self.dataArrays.getArray("dataArray")[indexStart:indexStop, :]
         if (startSek > 0):
             intvalTimeStart = math.floor((len(cutArr)/(T[len(T)-1]-T[0]))*(startSek-1))
         else:
@@ -27,7 +31,7 @@ class Calculations():
         self.timeArr = T[intvalTimeStart:intvalTimeStop]
         
     def betDetection(self, startIndex, stopIndex):
-        dataArray = arrH.DataArrays.getArray(self, "dataArray")
+        dataArray = self.dataArrays.getArray("dataArray")
         def getPoints(dataArray, RMS):
             packets = []
             points = dataArray[startIndex:stopIndex,0][np.nonzero(dataArray[startIndex:stopIndex,5] > 2.4*RMS)]           #Assign acc(Z)Value > 1.7xRMS to corrresponding packet
@@ -36,7 +40,7 @@ class Calculations():
                     packets.append(points[i])
             return packets
         
-        sampleFrekvens = arrH.DataArrays.getDataRate(arrH.DataArrays.getArray(self, "dataRegist")[69,2])             #DataRate for inertia and mag
+        sampleFrekvens = self.dataArrays.getDataRate(self.dataArrays.getArray("dataRegist")[69,2])             #DataRate for inertia and mag
         aproxSekvensTime = 3
         dataSelection = []
         Square = 0

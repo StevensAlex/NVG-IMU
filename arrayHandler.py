@@ -30,15 +30,15 @@ class DataArrays():
         return switcher.get(argument, 0)
 
     def timeConversion(self, argument, startSession, stopSession):  #Timeconversion from packets of selected arraylength starting at 0:
-        packetArr = DataArrays.getArray(self,argument)
+        packetArr = self.getArray(argument)
         if (argument == "dataArray"): 
-            timeArray = DataArrays.getArray(self,"dataTime")
-            register = DataArrays.getArray(self, "dataRegist")
+            timeArray = self.getArray("dataTime")
+            register = self.getArray("dataRegist")
         elif (argument == "neckArray"):
-            timeArray = DataArrays.getArray(self,"neckTime")
-            register = DataArrays.getArray(self, "neckRegister")
+            timeArray = self.getArray("neckTime")
+            register = self.getArray("neckRegister")
 
-        sampleFrekvens = DataArrays.getDataRate(register[69,2])                 #position in register for data rate acquisition
+        sampleFrekvens = self.getDataRate(register[69,2])                 #position in register for data rate acquisition
         if (startSession <= 0):
             timeStart = timeArray[0, 4]*3600 + timeArray[0, 5]*60 + timeArray[0, 6]
         else:
@@ -60,7 +60,7 @@ class DataArrays():
             T[i] = i*(sessionTime/len(cutPacks))
         return T
 
-    def getDataRate(argument):
+    def getDataRate(self, argument):
         switcher = {
             0x0000: "Disabled",
             0x0001: 1,
@@ -77,8 +77,8 @@ class DataArrays():
         return switcher.get(argument, 0)
 
     def getIndexFromTime(self, argument, time):
-        packetArr = DataArrays.getArray(self,argument)
-        sessionTime = DataArrays.timeConversion(self,"dataArray",0,(len(packetArr)))[(len(packetArr)-1)]        #Total trial time
+        packetArr = self.getArray(argument)
+        sessionTime =self.timeConversion("dataArray",0,(len(packetArr)))[(len(packetArr)-1)]        #Total trial time
         if(time <= 0):
             time = 0
         if(time >= sessionTime):
