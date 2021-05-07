@@ -21,6 +21,8 @@ class GUI:
         self.min_t_val = 0
         self.indexStart=0
         self.indexStop=0
+        self.min_t_val = 0
+        self.max_t_val = 0
         self.total_steps = 0
         self.step_frequency =0
         self.stdv_steps =0
@@ -212,6 +214,12 @@ class GUI:
                 messagebox.showinfo("Notification", "Sluttiden kan inte vara större \nän "+ str(self.max_t_val)+ "!")
             elif(self.timeStart>self.timeStop):
                 messagebox.showinfo("Notification", "Starttiden kan inte vara större än sluttiden!")
+            elif(self.timeStop - self.timeStart < 10 ):
+                mssagebox.showinfo("Notification", "Intervallet är för kort! \nMåste vara större än 10 sekunder!")
+            elif(self.timeStart<self.min_t_val and self.max_t_val>0 ):
+                messagebox.showinfo("Notification", "Starttiden kan inte vara mindre \nän "+ str(self.min_t_val)+ "!")
+            elif(self.timeStop>self.max_t_val and self.max_t_val>0 ):
+                messagebox.showinfo("Notification", "Sluttiden kan inte vara större \nän "+ str(self.max_t_val)+ "!")
             else:
                 messagebox.showinfo("Notification", "Ingen data är tillgänglig! \nVänligen kontrollera att filer är \nimporterade och betingelse är vald.")
         except:
@@ -229,23 +237,25 @@ class GUI:
         plt.show()
 
     def saveToFile(self):
-        try:
-        #fN = imp.Subject.getFileName(self)
-        #print(fN)
-        #csv.register_dialect('myDialect', delimiter='/', quoting=csv.QUOTE_NONE)
-            myData = [self.timeStart, self.timeStop, str(self.total_steps), str(self.step_frequency), str(self.stdv_steps),str(self.step_height), str(self.stdv_height), 
-                    str(self.max_height),str(self.min_height),str(self.step_length),str(self.stdv_length), self.comment.get()]
+        #try:
+            #fN = self.subject.getFileName()
+            #print(fN)
+            csv.register_dialect('myDialect', delimiter='/', quoting=csv.QUOTE_NONE)
+            #myData = [str(self.timeStart), str(self.timeStop), str(self.total_steps), str(self.step_frequency), str(self.stdv_steps),str(self.step_height), str(self.stdv_height), 
+            #        str(self.max_height),str(self.min_height),str(self.step_length),str(self.stdv_length), self.comment.get()]
+            myData = [self.timeStart, self.timeStop, self.total_steps, self.step_frequency, self.stdv_steps,self.step_height, self.stdv_height, 
+                    self.max_height,self.min_height,self.step_length,self.stdv_length, self.comment.get()]
             print(myData)
-        #myFile = open('resultat.csv', 'w')
-        #with myFile:
-        #    writer = csv.writer(myFile, dialect='myDialect')
-        #    myFields = ['Startsek', 'Stopsek', 'Antal steg', 'Stegfrekvens', 'Stdv stegfrekvens', 'Medelhöjd', 'Stdv steghöjd',
-        #     '         Maxhöjd', 'Minhöjd', 'Steglängd', 'Stdv steglängd', 'Kommentar']
-        #    writer = csv.DictWriter(myFile, fieldnames=myFields)    
-        #    writer.writeheader()
-        #    writer.writerow(myData)
-        except:
-            messagebox.showwarning("Notification", "Saknas tillräckligt med information! \nHar beräkning genomförts?")
+            myFile = open('resultat.csv', 'w')
+            with myFile:
+                writer = csv.writer(myFile, dialect='myDialect')
+                myFields = ['Startsek', 'Stopsek', 'Antal steg', 'Stegfrekvens', 'Stdv stegfrekvens', 'Medelhöjd', 'Stdv steghöjd',
+                        'Maxhöjd', 'Minhöjd', 'Steglängd', 'Stdv steglängd', 'Kommentar']
+                writer = csv.DictWriter(myFile, fieldnames=myFields)    
+                writer.writeheader()
+                writer.writerows(myData)
+        #except:
+        #    messagebox.showwarning("Notification", "Saknas tillräckligt med information! \nHar beräkning genomförts?")
 window = tk.Tk()
 GUI(window)
 window.mainloop()
