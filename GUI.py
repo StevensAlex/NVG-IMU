@@ -111,8 +111,9 @@ class GUI:
 
     def enterData(self):
         try:
-            subject = imp.Subject()
-            arrH.DataArrays.setArrays(self,subject)
+            self.subject = imp.Subject()
+            self.dataArrays = arrH.DataArrays()
+            self.dataArrays.setArrays(self.subject)
             tk.Label(window, text="Laddat",font=("Arial", 8)).place(x=55,y=50)
             messagebox.showinfo("Notification","Datat har laddat färdigt!")
         except:
@@ -120,17 +121,17 @@ class GUI:
 
     def enterBet(self):
         try:
-            arrLA = arrH.DataArrays.getArray(self,"dataArray")
-            arrN = arrH.DataArrays.getArray(self, "neckArray")
+            arrLA = self.dataArrays.getArray("dataArray")
+            arrN = self.dataArrays.getArray("neckArray")
             self.fig, self.ax = plt.subplots()
             if (len(arrLA) >= len(arrN)):
-                time = arrH.DataArrays.timeConversion(self,"dataArray",0,(len(arrLA)))  #tillfälligt från y till z
+                time = self.dataArrays.timeConversion("dataArray",0,(len(arrLA)))
                 newArr = np.zeros((len(arrLA)), dtype = float)
                 for i in range(len(arrN)):
                     newArr[i] = arrN[i,5]
                 self.ax.plot(time, arrLA[:,5],label="LA-y")
             else:
-                time = arrH.DataArrays.timeConversion(self,"neckArray",0,(len(arrN)))
+                time = self.dataArrays.timeConversion("neckArray",0,(len(arrN)))
                 newArr = np.zeros((len(arrN)), dtype = float)
                 for i in range(len(arrLA)):
                     newArr[i] = arrLA[i,5]
@@ -162,8 +163,8 @@ class GUI:
         if event.key == "enter":
             #dataLen = arrH.DataArrays.getArray(self,"dataArray")                      #kontroll
             if (self.minP >= 0 and self.maxP>0):
-                start = arrH.DataArrays.getIndexFromTime(self,"dataArray",self.minP)
-                stopp = arrH.DataArrays.getIndexFromTime(self,"dataArray",self.maxP)
+                start = self.dataArrays.getIndexFromTime("dataArray",self.minP)
+                stopp = self.dataArrays.getIndexFromTime("dataArray",self.maxP)
                 self.lasso.disconnect_events()
                 self.ax.set_title("")
                 plt.close('all')
@@ -171,11 +172,13 @@ class GUI:
                 #plt.plot(indexes, dataLen[start:stopp,5])                           #Temporär kontroll
                 #plt.show()
                 if( (stopp > start ) and (stopp > 0 )):
-                    self.betArr = calc.Calculations.betDetection(self, start, stopp)
+                    self.calculations = calc.Calculations()
+                    self.calculations.setArrayHandler(self.dataArrays)
+                    self.betArr = self.calculations.betDetection(start, stopp)
                     print(self.betArr)
                     print("längden " + str(len(self.betArr)))
                     if(len(self.betArr)>=2):
-                        cutTime = arrH.DataArrays.timeConversion(self,"dataArray",int(self.betArr[0][0]),int(self.betArr[1][0]))          
+                        cutTime = self.dataArrays.timeConversion("dataArray",int(self.betArr[0][0]),int(self.betArr[1][0]))         
                         indexes = np.arange(int(self.betArr[0][0]),int(self.betArr[1][0]))
                         #plt.plot(indexes,dataLen[int(self.betArr[0][0]):int(self.betArr[1][0]),5])
                         #plt.show()
@@ -196,16 +199,16 @@ class GUI:
    
     def runCalc(self):
         try:
-            t1 = float(self.t1String.get())
-            t2 = float(self.t2String.get())
-            if(t2>t1 and t1 >= 0 and self.indexStart>=0 and self.indexStop>self.indexStart):
-                calc.Calculations.setDataArray(self,t1,t2, self.indexStart,self.indexStop)
+            self.timeStart = float(self.t1String.get())
+            self.timeStop = float(self.t2String.get())
+            if(self.timeStop>self.timeStart and self.timeStart >= 0 and self.indexStart>=0 and self.indexStop>self.indexStart):
+                self.calculations.setDataArray(self.timeStart,self.timeStop, self.indexStart,self.indexStop)
                 #Temporärt utseende
-                stepsArr = calc.Calculations.stepFrequency(self)
+                stepsArr = self.calculations.stepFrequency()
                 self.total_steps = len(stepsArr)
                 self.step_frequency = stat.mean(stepsArr)
                 self.stdv_steps = stat.stdev(stepsArr)
-            elif(t1>t2):
+            elif(self.timeStart>self.timeStop):
                 messagebox.showinfo("Notification", "Starttiden kan inte vara större än sluttiden!")
             else:
                 messagebox.showinfo("Notification", "Ingen data är tillgänglig! \nVänligen kontrollera att filer är \nimporterade och betingelse är vald.")
@@ -224,20 +227,23 @@ class GUI:
         plt.show()
 
     def saveToFile(self):
-        print(self.comment.get())
+        try:
         #fN = imp.Subject.getFileName(self)
         #print(fN)
         #csv.register_dialect('myDialect', delimiter='/', quoting=csv.QUOTE_NONE)
-        myData = [self.t1String.get(), self.t2String.get(), str(self.total_steps), str(self.step_frequency), str(self.stdv_steps),str(self.step_height), str(self.stdv_height), str(self.max_height),str(self.min_height),str(self.step_length),str(self.stdv_length)]
-        print(myData)
+            myData = [self.timeStart, self.timeStop, str(self.total_steps), str(self.step_frequency), str(self.stdv_steps),str(self.step_height), str(self.stdv_height), 
+                    str(self.max_height),str(self.min_height),str(self.step_length),str(self.stdv_length), self.comment.get()]
+            print(myData)
         #myFile = open('resultat.csv', 'w')
         #with myFile:
         #    writer = csv.writer(myFile, dialect='myDialect')
-        #    myFields = ['Startsek', 'Stopsek', 'Antal steg', 'Stegfrekvens', 'Stdv stegfrekvens', 'Medelhöjd', 'Stdv steghöjd', 'Maxhöjd', 'Minhöjd', 'Steglängd', 'Stdv steglängd']
+        #    myFields = ['Startsek', 'Stopsek', 'Antal steg', 'Stegfrekvens', 'Stdv stegfrekvens', 'Medelhöjd', 'Stdv steghöjd',
+        #     '         Maxhöjd', 'Minhöjd', 'Steglängd', 'Stdv steglängd', 'Kommentar']
         #    writer = csv.DictWriter(myFile, fieldnames=myFields)    
         #    writer.writeheader()
         #    writer.writerow(myData)
-
+        except:
+            messagebox.showwarning("Notification", "Saknas tillräckligt med information! \nHar beräkning genomförts?")
 window = tk.Tk()
 GUI(window)
 window.mainloop()
