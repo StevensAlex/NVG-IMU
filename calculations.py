@@ -2,14 +2,23 @@ import numpy as np
 import math
 import arrayHandler as arrH
 import statistics as stat
+import gaitFinder
 
 class Calculations():
-    def _init_(self):
+    def __init__(self, dataArrays):
         self.startTime = 0
         self.stopTime = 0
         self.dataArr = np.array([0])
         self.timeArr = np.array([0])
         self.dataArrays = arrH.DataArrays()
+
+    def setDt(self, dataTime, dataArray):
+        timeStart = dataTime[0, 4]*3600 + dataTime[0, 5]*60 + dataTime[0, 6]
+        last = len(dataTime[:,0]) - 1
+        timeStop = dataTime[last, 4]*3600 + dataTime[last, 5]*60 + dataTime[last, 6]
+        timeTotal = timeStop - timeStart
+        self.dt = timeTotal / len(dataArray[:,0])
+        
 
     def setArrayHandler(self, dataArrays):
         self.dataArrays = dataArrays
@@ -29,7 +38,11 @@ class Calculations():
         self.stopTime = stopSek
         self.dataArr = cutArr[intvalTimeStart:intvalTimeStop,:]
         self.timeArr = T[intvalTimeStart:intvalTimeStop]
-        
+
+    def getGaits(self):
+        gf = gaitFinder.GaitFinder(self.dataArr, self.dt)
+        return 0
+
     def betDetection(self, startIndex, stopIndex):
         dataArray = self.dataArrays.getArray("dataArray")
         def getPoints(dataArray, RMS):

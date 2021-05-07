@@ -172,7 +172,7 @@ class GUI:
                 #plt.plot(indexes, dataLen[start:stopp,5])                           #Temporär kontroll
                 #plt.show()
                 if( (stopp > start ) and (stopp > 0 )):
-                    self.calculations = calc.Calculations()
+                    self.calculations = calc.Calculations(self.dataArrays)
                     self.calculations.setArrayHandler(self.dataArrays)
                     self.betArr = self.calculations.betDetection(start, stopp)
                     print(self.betArr)
@@ -208,6 +208,8 @@ class GUI:
                 self.total_steps = len(stepsArr)
                 self.step_frequency = stat.mean(stepsArr)
                 self.stdv_steps = stat.stdev(stepsArr)
+                
+                
             elif(self.timeStart>self.timeStop):
                 messagebox.showinfo("Notification", "Starttiden kan inte vara större än sluttiden!")
             else:
@@ -215,6 +217,8 @@ class GUI:
         except:
             messagebox.showinfo("Notification", "Fönstrena tar bara emot siffror! \nKontrollera att inget tecken kom med och försök igen.")
         self.updateValues(self.total_steps, self.step_frequency, self.stdv_steps, self.step_height, self.stdv_height,self.max_height,self.min_height,self.step_length,self.stdv_length)
+        self.calculations.setDt(self.calculations.dataArrays.dataTime, self.dataArrays.dataArray)
+        a = self.calculations.getGaits()
 
     def plot2d(self):   #Not yet done
         print("2D")

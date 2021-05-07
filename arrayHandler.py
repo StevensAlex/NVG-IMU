@@ -2,7 +2,7 @@ import numpy as np
 import math 
 
 class DataArrays():
-    def _init_(self):
+    def __init__(self):
         self.dataTime = np.array([0])
         self.dataRegist = np.array([0])
         self.dataArray = np.array([0])
