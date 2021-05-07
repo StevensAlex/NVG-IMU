@@ -74,16 +74,19 @@ class Calculations():
             elif( i == (len(packets)-2) and (packets[i+1] - packets[i] < aproxSekvensTime*sampleFrekvens*50)):
                 dataSelection.append(packets[i+1])
 
-        print(dataSelection)
-        if( len(dataSelection) >= 2):
-            for i in range(1,(len(dataSelection)-1)):
-                if (i == (len(dataSelection)-1) and (dataSelection[i]-dataSelection[i-1]) < aproxSekvensTime*sampleFrekvens*150):
-                    dataSelection.remove(dataSelection[i])
-                elif( (dataSelection[i]-dataSelection[i-1]) < aproxSekvensTime*sampleFrekvens*120 ):
-                    dataSelection.remove(dataSelection[i-1])
+        betData = []
+        if(len(dataSelection)%2 == 0 and len(dataSelection) >= 2):
+            if (len(dataSelection) == 2):
+                betData.append(dataSelection[0])
+                betData.append(dataSelection[1])
+            else:
+                for i in range(1,(len(dataSelection))):
+                    if (i%2 != 0 and (dataSelection[i]-dataSelection[i-1]) > aproxSekvensTime*sampleFrekvens*120):
+                        betData.append(dataSelection[i-1])
+                        betData.append(dataSelection[i])
         indexes = []
-        if( len(dataSelection) >=2):
-            for packet in dataSelection:
+        if( len(betData) >=2):
+            for packet in betData:
                 indexes.append(np.where(dataArray[:,0] == packet))
         return indexes
 
