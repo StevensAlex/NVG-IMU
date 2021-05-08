@@ -18,7 +18,11 @@ class Calculations():
         timeStop = dataTime[last, 4]*3600 + dataTime[last, 5]*60 + dataTime[last, 6]
         timeTotal = timeStop - timeStart
         self.dt = timeTotal / len(dataArray[:,0])
-        
+        print(self.dt)
+        length = self.dataArrays.getArray("dataArray")
+        time = self.dataArrays.timeConversion("dataArray", 0, len(length))
+        dt = time[len(time)-1]/len(length)
+        print(dt)
 
     def setArrayHandler(self, dataArrays):
         self.dataArrays = dataArrays
@@ -61,7 +65,6 @@ class Calculations():
         for i in range(0,len(dataArray)):
             Square += dataArray[i,5]**2
         RMS = math.sqrt(Square/len(dataArray))
-        print(RMS)
 
         packets = getPoints(dataArray, RMS)
         for i in range(1, len(packets)-1):                                      #Remove nearby packets and remain with farends of "packet-group"

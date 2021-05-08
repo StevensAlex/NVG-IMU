@@ -11,7 +11,6 @@ class Subject():
         root.withdraw()
         try:
             self.path = str(filedialog.askdirectory())
-        #if (str(path) != ''):
             files = os.listdir(self.path)
             #import IMU's being used
             print("Loading data, this may take a while")

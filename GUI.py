@@ -17,6 +17,8 @@ class GUI:
         window.minsize(400,600)
         #window.geometry()
         
+        self.min_t_val = 0
+        self.min_t_val = 0
         self.indexStart=0
         self.indexStop=0
         self.total_steps = 0
@@ -157,37 +159,29 @@ class GUI:
         spPoints = np.reshape(sPoints,[len(sPoints),1])
         self.minP = float(spPoints[0]['x']) 
         self.maxP = float(spPoints[(len(sPoints)-1)]['x'])
-        #print(spPoints)                                         #kontroll
 
     def accept(self, event):
         if event.key == "enter":
-            #dataLen = arrH.DataArrays.getArray(self,"dataArray")                      #kontroll
             if (self.minP >= 0 and self.maxP>0):
                 start = self.dataArrays.getIndexFromTime("dataArray",self.minP)
                 stopp = self.dataArrays.getIndexFromTime("dataArray",self.maxP)
                 self.lasso.disconnect_events()
                 self.ax.set_title("")
                 plt.close('all')
-                #indexes = np.arange(start,stopp)
-                #plt.plot(indexes, dataLen[start:stopp,5])                           #Temporär kontroll
-                #plt.show()
                 if( (stopp > start ) and (stopp > 0 )):
                     self.calculations = calc.Calculations(self.dataArrays)
                     self.calculations.setArrayHandler(self.dataArrays)
                     self.betArr = self.calculations.betDetection(start, stopp)
-                    print(self.betArr)
-                    print("längden " + str(len(self.betArr)))
                     if(len(self.betArr)>=2):
-                        cutTime = self.dataArrays.timeConversion("dataArray",int(self.betArr[0][0]),int(self.betArr[1][0]))         
-                        indexes = np.arange(int(self.betArr[0][0]),int(self.betArr[1][0]))
-                        #plt.plot(indexes,dataLen[int(self.betArr[0][0]):int(self.betArr[1][0]),5])
-                        #plt.show()
+                        cutTime = self.dataArrays.timeConversion("dataArray",int(self.betArr[0][0]),int(self.betArr[1][0]))
                         self.indexStart = int(self.betArr[0][0])
                         self.indexStop = int(self.betArr[1][0])
                         if len(self.betArr) > 2:
                             messagebox.showinfo("Notification", "Mer än en betingelse detekterades! \nBeräknar på första. Om osäker på vilken det är,\nvänligen välj ny betingelse.")
                         self.t1String.set(cutTime[0])
                         self.t2String.set(cutTime[(len(cutTime)-1)])
+                        self.min_t_val = float(self.t1String.get())
+                        self.max_t_val = float(self.t2String.get())
                     else:
                         messagebox.showwarning("Notification", "Ingen data detekterades, \nvänligen försök igen!")
                         self.t1String.set(' ')
@@ -201,15 +195,21 @@ class GUI:
         try:
             self.timeStart = float(self.t1String.get())
             self.timeStop = float(self.t2String.get())
-            if(self.timeStop>self.timeStart and self.timeStart >= 0 and self.indexStart>=0 and self.indexStop>self.indexStart):
+            if(self.timeStop - self.timeStart < 30 ):
+                mssagebox.showinfo("Notification", "Intervallet är för kort! \nMåste vara större än 30 sekunder!")
+            elif(self.timeStop>self.timeStart and self.timeStart>=self.min_t_val and self.timeStop<=self.max_t_val):
                 self.calculations.setDataArray(self.timeStart,self.timeStop, self.indexStart,self.indexStop)
+                self.calculations.setDt(self.calculations.dataArrays.dataTime, self.dataArrays.dataArray)
+                a = self.calculations.getGaits()
                 #Temporärt utseende
                 stepsArr = self.calculations.stepFrequency()
                 self.total_steps = len(stepsArr)
                 self.step_frequency = stat.mean(stepsArr)
                 self.stdv_steps = stat.stdev(stepsArr)
-                
-                
+            elif(self.timeStart<self.min_t_val and self.max_t_val>0 ):
+                messagebox.showinfo("Notification", "Starttiden kan inte vara mindre \nän "+ str(self.min_t_val)+ "!")
+            elif(self.timeStop>self.max_t_val and self.max_t_val>0 ):
+                messagebox.showinfo("Notification", "Sluttiden kan inte vara större \nän "+ str(self.max_t_val)+ "!")
             elif(self.timeStart>self.timeStop):
                 messagebox.showinfo("Notification", "Starttiden kan inte vara större än sluttiden!")
             else:
@@ -217,8 +217,6 @@ class GUI:
         except:
             messagebox.showinfo("Notification", "Fönstrena tar bara emot siffror! \nKontrollera att inget tecken kom med och försök igen.")
         self.updateValues(self.total_steps, self.step_frequency, self.stdv_steps, self.step_height, self.stdv_height,self.max_height,self.min_height,self.step_length,self.stdv_length)
-        self.calculations.setDt(self.calculations.dataArrays.dataTime, self.dataArrays.dataArray)
-        a = self.calculations.getGaits()
 
     def plot2d(self):   #Not yet done
         print("2D")
