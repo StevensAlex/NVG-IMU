@@ -3,11 +3,12 @@ import statistics as stat
 import matplotlib.pyplot as plt
 
 class GaitFinder:
-    def __init__(self, dataArray, dt):
+    def __init__(self, dataArray, dt, duration,timeArr):
 
         #Prepare data
         self.gyroZ = dataArray[:,3]
         self.filZ = self.filter(self.gyroZ)
+        self.timeArr = timeArr
         plt.figure()
 
         #Calculate new data
@@ -15,21 +16,21 @@ class GaitFinder:
         self.strikes = self.findStrikes(self.peaks, self.filZ)
         self.offs = self.findOffs(self.strikes, self.filZ)
         self.splits = self.findSplits(self.filZ, self.strikes, self.offs)
-        self.cutArr, self.splits = self.dataCutter(self.splits, self.filZ, dt)
+        self.cutArr, self.splits = self.dataCutter(self.splits, self.filZ, dt, duration,timeArr)
         self.fqs = self.getFqs(self.splits, dt)
 
         #===========Plot-stuff==============
-        xArr = np.arange(len(self.gyroZ))
-        plt.plot(xArr, self.gyroZ, label='raw')
-        plt.plot(xArr, self.filZ, label='filtered')
-        plt.legend()
-        for peak in self.peaks:
-            plt.axvline(peak, color = 'r', ymin= 0.15, ymax=0.85)
-        for strike in self.strikes:
-            plt.axvline(strike, color = 'g', ymin= 0.15, ymax=0.85)
-        for off in self.offs:
-            plt.axvline(off, color = 'm', ymin= 0.15, ymax=0.85)
-        plt.show()
+        #xArr = np.arange(len(self.gyroZ))
+        #plt.plot(self.timeArr, self.gyroZ, label='raw')
+        #plt.plot(self.timeArr, self.filZ, label='filtered')
+        #plt.legend()
+        #for peak in self.peaks:
+        #    plt.axvline(peak, color = 'r', ymin= 0.15, ymax=0.85)
+        #for strike in self.strikes:
+        #    plt.axvline(strike, color = 'g', ymin= 0.15, ymax=0.85)
+        #for off in self.offs:
+        #    plt.axvline(off, color = 'm', ymin= 0.15, ymax=0.85)
+        #plt.show()
         #===========Plot-stuff==============
 
 
@@ -90,7 +91,7 @@ class GaitFinder:
 
     def findSplits(self, data, strikes, offs):
         splits = []
-        for i in range(len(strikes)):
+        for i in range(len(offs)):
             raw = data[strikes[i]:offs[i]]
             axis = np.arange(strikes[i], offs[i])
             model = np.poly1d(np.polyfit(axis, raw, 2))
@@ -100,24 +101,27 @@ class GaitFinder:
             splits.append(split)
         return splits
 
-    def dataCutter(self, splits, data, dt):
-        minTime = 60
+    def dataCutter(self, splits, data, dt, duration, timeArr):
         t = 0
+        time = []
         finalSplitIndex = 0
-        for i in range(len(splits) - 1):
+        for i in range(len(splits) - 2):
             t += (splits[i+1] - splits[i]) * dt
-            if t > minTime:
-                finalSplitIndex = i
-                break
+            time.append(t)
+            if( i == len(splits)-3):
+                finalSplitIndex = len(splits)-1
+            if t > duration+time[0]:
+               finalSplitIndex = i+1
+               break
         cutArr = data[splits[0]:splits[finalSplitIndex]]
         splits = splits[0:finalSplitIndex]
         return cutArr, splits
         
     def getFqs(self, splits, dt):
         fqs = []
-        for i in range(1, len(splits)-1):
-            t = (splits[i] - splits[i-1]) * dt
+        for i in range(0, len(splits)-1):
+            t = (splits[i+1] - splits[i]) * dt
             fqs.append(1/t)
-        print(stat.mean(fqs), 'hz')
+        return fqs
             
 

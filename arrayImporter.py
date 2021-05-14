@@ -7,22 +7,22 @@ import re
 class Subject():
     def __init__(self):
         root = tk.Tk()
-        self.path = tk.StringVar(root)
+        self.file_path = ''
         root.withdraw()
         try:
-            self.path = str(filedialog.askdirectory())
-            files = os.listdir(self.path)
+            path = str(filedialog.askdirectory())
+            files = os.listdir(path)
             #import IMU's being used
             print("Loading data, this may take a while")
-            
+            self.file_path = path
             #LA
             patternLA = 'LA-200'
             comparePat = re.compile(patternLA)
-            if (patternLA in files or comparePat.search(self.path)):
+            if (patternLA in files or comparePat.search(path)):
                 if patternLA in files:
-                    LAPath = self.path + "/" + patternLA + "/"
+                    LAPath = path + "/" + patternLA + "/"
                 else:
-                    LAPath = self.path + "/"
+                    LAPath = path + "/"
                 print("Loading LA-200")
                 filesLA = os.listdir(LAPath)
                 for file in filesLA:
@@ -41,11 +41,11 @@ class Subject():
             #N
             patternN = 'N-600'
             comparePat = re.compile(patternN)
-            if (patternN in files or comparePat.search(self.path)):
+            if (patternN in files or comparePat.search(path)):
                 if patternN in files:
-                    NPath = self.path + "/" + patternN + "/"
+                    NPath = path + "/" + patternN + "/"
                 else:
-                    NPath = self.path + "/"
+                    NPath = path + "/"
                 print("Loading N-600")
                 filesN = os.listdir(NPath)
                 for file in filesN:
@@ -63,7 +63,3 @@ class Subject():
             print("Loading complete!")
         except FileNotFoundError:
             print("Loading failed!")
-    
-    def getFileName(self):
-        name = self.path.get()
-        return name

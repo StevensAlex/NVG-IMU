@@ -8,20 +8,16 @@ import statistics as stat
 import tkinter as tk
 import GUI
 
-#window = tk.Tk()
-#GUI(window)
-#window.mainloop()
+window = tk.Tk()
+GUI(window)
+window.mainloop()
 
 subject = imp.Subject()
 dataTime = subject.LAtimeArray
 dataRegist = subject.LAregArray
 dataArray = subject.LAcalArray
-eulerArray = subject.LAeulerArray
-rotationArray = subject.LArotationArray
-dataQt = subject.LAquaternionArray
 dtimeArray = dataTime[:,0]
 neckArray = subject.NcalArray
-nEulArray = subject.NeulerArray
 
 #plt.figure(1)
 #plt.plot(eulerArray[:,0], eulerArray[:,1], label='x/phi')
@@ -40,32 +36,32 @@ print("time per packet: ", dt, 'implying data rate of ', 1/dt , 'Hz')
 globalTimeArr = np.linspace(0, timeTotal, num=len(dataArray[:,0]))
 
 
-def q_conjugate(q):
-    w, x, y, z = q
-    return(w, -x, -y, -z)
-def qv_mult(q1, v1):
-    q2=(0.0,)+v1
-    return q_mult(q_mult(q1,q2),q_conjugate(q1))[1:]
-def q_mult(q1,q2):
-    w1,x1,y1,z1 = q1
-    w2,x2,y2,z2 = q2
-    w = w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2
-    x = w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2
-    y = w1 * y2 + y1 * w2 + z1 * x2 - x1 * z2
-    z = w1 * z2 + z1 * w2 + x1 * y2 - y1 * x2
-    return w, x, y, z
-quaterions = dataQt
-q0 = quaterions[:,1]
-q1 = quaterions[:,2]
-q2 = quaterions[:,3]
-q3 = quaterions[:,4]
-roll = []
-pitch = []
-yaw = []
-for i in range(0, len(quaterions)):
-    roll.append(math.atan2(2*(q0[i]*q1[i]+q2[i]*q3[i]),1-2*(q1[i]**2+q2[i]**2)))
-    pitch.append(math.asin(2*(q0[i]*q2[i]-q3[i]*q1[i])))
-    yaw.append(math.atan2(2*(q0[i]*q3[i]+q1[i]*q2[i]),1-2*(q2[i]**2+q3[i]**2)))
+#def q_conjugate(q):
+#    w, x, y, z = q
+#    return(w, -x, -y, -z)
+#def qv_mult(q1, v1):
+#    q2=(0.0,)+v1
+#    return q_mult(q_mult(q1,q2),q_conjugate(q1))[1:]
+#def q_mult(q1,q2):
+#    w1,x1,y1,z1 = q1
+#    w2,x2,y2,z2 = q2
+#    w = w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2
+#    x = w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2
+#    y = w1 * y2 + y1 * w2 + z1 * x2 - x1 * z2
+#    z = w1 * z2 + z1 * w2 + x1 * y2 - y1 * x2
+#    return w, x, y, z
+#quaterions = dataQt
+#q0 = quaterions[:,1]
+#q1 = quaterions[:,2]
+#q2 = quaterions[:,3]
+#q3 = quaterions[:,4]
+#roll = []
+#pitch = []
+#yaw = []
+#for i in range(0, len(quaterions)):
+#    roll.append(math.atan2(2*(q0[i]*q1[i]+q2[i]*q3[i]),1-2*(q1[i]**2+q2[i]**2)))
+#    pitch.append(math.asin(2*(q0[i]*q2[i]-q3[i]*q1[i])))
+#    yaw.append(math.atan2(2*(q0[i]*q3[i]+q1[i]*q2[i]),1-2*(q2[i]**2+q3[i]**2)))#
 
 
 def switch_dataRate(argument):
@@ -138,8 +134,8 @@ for i in range(len(neckArray)):
             knPoints.append(tempArr[len(tempArr)-1])
 
     #Decide which session to make calculations on:
-startSession = 4
-stopSession = 5
+startSession = 5
+stopSession = 6
 cutPacks = dataArray[int(indexes[startSession][0]):int(indexes[stopSession][0]),0]           #Cut out an array during a walking trial S4 4-5, S12 5-6
 
 cutYArr = dataArray[int(indexes[startSession][0]):int(indexes[stopSession][0]),5]   #5 accY
@@ -150,7 +146,11 @@ cutXdeg = dataArray[int(indexes[startSession][0]):int(indexes[stopSession][0]),1
 cutYdeg = dataArray[int(indexes[startSession][0]):int(indexes[stopSession][0]),2]
 cutZdeg = dataArray[int(indexes[startSession][0]):int(indexes[stopSession][0]),3]
 
-cutEul = eulerArray[int(indexes[startSession][0]):int(indexes[stopSession][0]),:]
+modXArr = np.zeros(len(cutXArr))
+for i in range(len(cutXArr)):
+    modXArr[i] = cutXArr[i]+1
+
+#cutEul = eulerArray[int(indexes[startSession][0]):int(indexes[stopSession][0]),:]
 
     #Timeconversion of betingelse starting at 0:
 for i in range(0, len(dtimeArray)):
@@ -205,51 +205,48 @@ for i in range(intvalTimeStart,intvalTimeStop-1):
         if (len(frekvensA) >= 2):
             steg.append(1/(T[i]-frekvensA[len(frekvensA)-2]))
 
-print(steg)
-print(len(steg))
-print(frekvensA)
 print('calculating acceleration vector')
-cutEu = eulerArray[int(indexes[startSession][0]):int(indexes[stopSession][0]),:]
-cutRot = rotationArray[int(indexes[startSession][0]):int(indexes[stopSession][0]),:]
-aList = [np.array([[0], [0], [0]])]
-c = 5
+#cutEu = eulerArray[int(indexes[startSession][0]):int(indexes[stopSession][0]),:]
+#cutRot = rotationArray[int(indexes[startSession][0]):int(indexes[stopSession][0]),:]
+#aList = [np.array([[0], [0], [0]])]
+#c = 5
 #for c in range(1,len(fqArray)):
-gaitTime = []
-for i in range(math.floor((len(cutPacks)/sessionTime)*fqArray[c-1]),math.floor((len(cutPacks)/sessionTime)*fqArray[c])):
-    gaitTime.append(T[i])
-    theta = cutEu[i,1] * (math.pi/180)
-    R_se = np.array([[cutRot[i, 1], cutRot[i, 2], cutRot[i, 3]], [cutRot[i, 4],cutRot[i, 5], cutRot[i, 6]], 
-                     [cutRot[i, 7], cutRot[i, 8], cutRot[i, 9]]])              #rotation matrix from IMU coordinates 's' to room coordinates 'e'
-    a_s = np.array([[cutXArr[i]*9.80665],[cutYArr[i]*9.80665], [cutZArr[i]*9.80665]])   #acceleration in IMU coordinates
+#gaitTime = []
+#for i in range(math.floor((len(cutPacks)/sessionTime)*fqArray[c-1]),math.floor((len(cutPacks)/sessionTime)*fqArray[c])):
+#    gaitTime.append(T[i])
+#    theta = cutEu[i,1] * (math.pi/180)
+#    R_se = np.array([[cutRot[i, 1], cutRot[i, 2], cutRot[i, 3]], [cutRot[i, 4],cutRot[i, 5], cutRot[i, 6]], 
+#                     [cutRot[i, 7], cutRot[i, 8], cutRot[i, 9]]])              #rotation matrix from IMU coordinates 's' to room coordinates 'e'
+#    a_s = np.array([[cutXArr[i]*9.80665],[cutYArr[i]*9.80665], [cutZArr[i]*9.80665]])   #acceleration in IMU coordinates#
+#
+#    a_e = -(np.dot(R_se, a_s)) - np.array([[9.80665], [0], [0]])                                       #acceleration in room coordinates - gravity
+#    aList.append(a_e)
+#print('done!')
+#print('calculating velocity and position vectors')
+#vList = [np.array([[0], [0], [0]])]
+#pList = [np.array([[0], [0], [0]])]
+#v_e = [np.array([[0], [0], [0]])]
+#p_e = [np.array([[0], [0], [0]])]
+#for i in range(1, len(aList)-1):
+#    v_e =  ((aList[i] + aList[i-1])/2) * dt
+#    vList.append(v_e)
+#    #print(v_e)
 
-    a_e = -(np.dot(R_se, a_s)) - np.array([[9.80665], [0], [0]])                                       #acceleration in room coordinates - gravity
-    aList.append(a_e)
-print('done!')
-print('calculating velocity and position vectors')
-vList = [np.array([[0], [0], [0]])]
-pList = [np.array([[0], [0], [0]])]
-v_e = [np.array([[0], [0], [0]])]
-p_e = [np.array([[0], [0], [0]])]
-for i in range(1, len(aList)-1):
-    v_e =  ((aList[i] + aList[i-1])/2) * dt
-    vList.append(v_e)
-    #print(v_e)
+#    p_e =  ((vList[i] + vList[i-1])/2) * dt
+#    pList.append(p_e)
+#print('done!')
+#p_xList = []
+#p_yList = []
+#p_zList = []
 
-    p_e =  ((vList[i] + vList[i-1])/2) * dt
-    pList.append(p_e)
-print('done!')
-p_xList = []
-p_yList = []
-p_zList = []
+#for arr in pList:
+#    p_xList.append(arr[0])
+#   p_yList.append(arr[1])
+#    p_zList.append(arr[2])
 
-for arr in pList:
-    p_xList.append(arr[0])
-    p_yList.append(arr[1])
-    p_zList.append(arr[2])
-
-plt.figure(2)
-plt.plot(gaitTime, p_xList)
-plt.title("vertical foot movement")
+#plt.figure(2)
+#plt.plot(gaitTime, p_xList)
+#plt.title("vertical foot movement")
 #plt.show()
 #print(p_xList)
 #print(p_yList)
@@ -281,34 +278,35 @@ plt.title("Accelorometre")
 #plt.plot(T, pitch, label="Pitch|Theta|Y(degree)")
 #plt.plot(T, yaw, label="Yaw|Psi|Z(degree")
 #plt.plot(T, cutXMag, label = "Mag X" )
-#plt.plot(T, cutXArr, label="cutArr (X)")
+plt.plot(T, cutXArr, label="cutArr (X)")
 #plt.plot(T, cutYArr, label="cutArr (Y)")                 
-plt.plot(T, cutZArr, label="cutArr (Z)")
+#plt.plot(T, cutZArr, label="cutArr (Z)")
+plt.plot(T, modXArr, label="+1 to X")
 plt.legend()
 #plt.axvline(cutPacks[intvalTimeStart], color = 'g', ymin= 0.15, ymax=0.85)
 #plt.axvline(cutPacks[intvalTimeStop], color = 'g', ymin= 0.15, ymax=0.85)
-plt.figure(5)
+#plt.figure(5)
 #for i in range(0,len(knPoints)):
 #       plt.axvline(knPoints[i], color = 'k', ymin= 0.25, ymax=0.75)
-for i in range(0,len(fqArray)):
+#for i in range(0,len(fqArray)):
     #plt.axvline((cutPacks[math.floor((len(cutPacks)/sessionTime)*fqArray[i])]), color = 'r', ymin= 0.15, ymax=0.85)   #Plot for whole or cutPacks
-    plt.axvline(fqArray[i], color = 'r', ymin= 0.15, ymax=0.85)
-for i in range(0,len(frekvensA)):
-    plt.axvline(frekvensA[i], color='k', ymin= 0.15, ymax=0.85)
+#    plt.axvline(fqArray[i], color = 'r', ymin= 0.15, ymax=0.85)
+#for i in range(0,len(frekvensA)):
+#    plt.axvline(frekvensA[i], color='k', ymin= 0.15, ymax=0.85)
 #plt.plot(T, cutXdeg, label="x")
 #plt.plot(T, cutYdeg, label="y")
-plt.plot(T, cutZdeg, label="z")
+#plt.plot(T, cutZdeg, label="z")
 #print(dataSelection)
 #print(knPoints)
 #plt.plot(nEulArray[:,0], nEulArray[:,x], label="X")                          
 #plt.plot(nEulArray[:,0], nEulArray[:,y], label="Y")
 #plt.plot(nEulArray[:,0], nEulArray[:,z], label="Z")
-plt.title("Angularvelocity")
-plt.legend()
-plt.figure(4)
-ax = plt.axes(projection='3d')
-ax.scatter3D(p_xList, p_yList, p_zList);
-plt.title('Gait movement')
+#plt.title("Angularvelocity")
+#plt.legend()
+#plt.figure(4)
+#ax = plt.axes(projection='3d')
+#x.scatter3D(p_xList, p_yList, p_zList);
+#plt.title('Gait movement')
 #plt.xlabel('seconds')
 #plt.ylabel('value')
 plt.figure(8)
