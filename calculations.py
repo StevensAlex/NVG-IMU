@@ -113,6 +113,6 @@ class Calculations():
         fq = self.gf.getFqs(self.gf.splits,self.dt)
         print(len(fq), 'st ')
         mf = stat.mean(fq)
-        print("medel är " +str("{0:.4f}".format(mf)) + " hz")
+        print("medel �r " +str("{0:.4f}".format(mf)) + " hz")
         std = round(stat.stdev(fq),5)
-        print("stdv är "+ str(std))
+        print("stdv �r "+ str(std))
