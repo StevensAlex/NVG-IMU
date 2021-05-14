@@ -3,6 +3,7 @@ import math
 
 class DataArrays():
     def __init__(self):
+        self.fileName = ''
         self.dataTime = np.array([0])
         self.dataRegist = np.array([0])
         self.dataArray = np.array([0])
@@ -11,6 +12,7 @@ class DataArrays():
         self.neckRegister = np.array([0])
     
     def setArrays(self,subject):
+        self.fileName = subject.file_path
         self.dataTime = subject.LAtimeArray
         self.dataRegist = subject.LAregArray
         self.dataArray = subject.LAcalArray
@@ -20,6 +22,7 @@ class DataArrays():
 
     def getArray(self,argument):
         switcher = {
+        "fileName": self.fileName,
         "dataTime": self.dataTime,
         "dataRegist": self.dataRegist,
         "dataArray": self.dataArray,
