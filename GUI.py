@@ -23,6 +23,7 @@ class GUI:
         self.heightText1 = tk.StringVar(window)
         self.heightText2 = tk.StringVar(window)
         self.lengthText = tk.StringVar(window)
+        self.loading_label = tk.StringVar()
         self.stepsLabel = tk.Label(window, textvariable=self.stepsText, font=("Arial", 11)).place(x=35,y=150)
         self.frequencyLabel = tk.Label(window,textvariable=self.frequencyText,font=("Arial", 11)).place(x=35,y=170)
         self.heightLabel1 = tk.Label(window,textvariable=self.heightText1,font=("Arial", 11)).place(x=35,y=230)
@@ -35,7 +36,9 @@ class GUI:
             bg='gray',
             fg='black',
             command= self.enterData
-            ).place(x=50, y=25)
+            ).place(x=50, y=17)
+
+        tk.Label(window, textvariable=self.loading_label,fg='green',font=("Arial", 8)).place(x=42,y=47)
 
         tk.Button(
             window,
@@ -43,7 +46,7 @@ class GUI:
             bg='gray',
             fg='black',
             command=self.enterBet
-            ).place(x=165, y=25)
+            ).place(x=165, y=17)
 
         tk.Label(text="Tidsinterval:",font=("Arial", 10)).place(x=30, y=65)
         self.t1String = tk.StringVar(window)
@@ -144,15 +147,17 @@ class GUI:
         self.lengthText.set('Medellängd ' + f"{str(stp_le)+ ' m':<18}" + '  Stdv ' + f"{str(stdv_le)+ ' m':<18}") 
 
     def enterData(self):
-        try:
+        #try:
+            self.loading_label.set('')
             self.subject = imp.Subject()
             self.dataArrays = arrH.DataArrays()
             self.dataArrays.setArrays(self.subject)
+            data_name = self.dataArrays.getArray("fileName").split('/')        #funkar
+            self.loading_label.set(str(data_name[len(data_name)-1]) +' laddat!')
             self.resetWindow()
-            tk.Label(window, text="Laddat",font=("Arial", 8)).place(x=55,y=50)
             messagebox.showinfo("Notification","Datat har laddat färdigt!")
-        except:
-            messagebox.showerror("Notification","Datat kunde inte laddas! \nFörsök igen!")
+        #except:
+            #messagebox.showerror("Notification","Datat kunde inte laddas! \nFörsök igen!")
 
     def enterBet(self):
         try:
@@ -273,11 +278,8 @@ class GUI:
 
     def saveToFile(self):
         try:
-            data_name = self.dataArrays.getArray("fileName")        #funkar
-            #Splitting
-            split_name = data_name.split('/')
-            data_name = split_name[len(split_name)-1]
-
+            data_name = self.dataArrays.getArray("fileName").split('/')       #funkar
+            data_name = data_name[len(data_name)-1]
             file_name = filedialog.asksaveasfilename(title="Save data",filetypes=(("csv files", "*csv"),("all files", "")))
             if file_name:
                 if file_name.endswith(".csv"):
