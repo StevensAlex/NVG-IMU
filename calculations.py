@@ -38,8 +38,8 @@ class Calculations():
         self.dataArr = cutArr[intvalTimeStart:intvalTimeStop,:]
         self.timeArr = T[intvalTimeStart:intvalTimeStop]
 
-    def getGaits(self):
-        self.gf = gaitFinder.GaitFinder(self.dataArr, self.dt)
+    def getGaits(self, duration):
+        self.gf = gaitFinder.GaitFinder(self.dataArr, self.dt, duration)
         
 
     def betDetection(self, startIndex, stopIndex):
