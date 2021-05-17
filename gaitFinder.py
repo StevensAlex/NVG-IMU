@@ -3,7 +3,7 @@ import statistics as stat
 import matplotlib.pyplot as plt
 
 class GaitFinder:
-    def __init__(self, dataArray, dt, duration,timeArr):
+    def __init__(self, dataArray, dt, duration):
 
         #Prepare data
         self.gyroZ = dataArray[:,3]
@@ -15,7 +15,7 @@ class GaitFinder:
         self.strikes = self.findStrikes(self.peaks, self.filZ)
         self.offs = self.findOffs(self.strikes, self.filZ)
         self.splits = self.findSplits(self.filZ, self.strikes, self.offs)
-        self.splits = self.dataCutter(self.splits, dataArray, dt)
+        self.splits = self.dataCutter(self.splits, dataArray, dt, duration)
         self.fqs = self.getFqs(self.splits, dt)
         self.steps = self.getStepsRaw(dataArray)
 
@@ -108,13 +108,14 @@ class GaitFinder:
             splits.append(split)
         return splits
 
-    def dataCutter(self, splits, data, dt, duration, timeArr):
+    #get a list of split points that make up the steps to be analyzed
+    def dataCutter(self, splits, data, dt, duration):
+        print(duration)
         t = 0
-        time = []
         finalSplitIndex = 0
-        for i in range(len(splits) - 2):
+        for i in range(len(splits) - 1):
             t += (splits[i+1] - splits[i]) * dt
-            if t > minTime:
+            if t > duration:
                 finalSplitIndex = i+1
                 break
         splits = splits[0:finalSplitIndex]

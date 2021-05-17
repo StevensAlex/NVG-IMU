@@ -148,7 +148,7 @@ class GUI:
         self.lengthText.set('Medellängd ' + f"{str(stp_le)+ ' m':<18}" + '  Stdv ' + f"{str(stdv_le)+ ' m':<18}") 
 
     def enterData(self):
-        #try:
+        try:
             self.loading_label.set('')
             self.subject = imp.Subject()
             self.dataArrays = arrH.DataArrays()
@@ -238,11 +238,12 @@ class GUI:
                 messagebox.showinfo("Notification", "Intervallet är för kort! \nMåste vara större än 30 sekunder!")
             elif(self.timeStop>self.timeStart and self.timeStart>=self.min_t_val and self.timeStop<=self.max_t_val):
                 self.calculations.setDataArray(self.timeStart,self.timeStop, self.indexStart,self.indexStop)
+                self.duration = self.timeStop - self.timeStart
+                print('set')
                 self.calculations.setDt(self.calculations.dataArrays.dataTime, self.dataArrays.dataArray)
-                self.calculations.getGaits()
-                print('post-gf')
-                steps, stepFq, fqStdev = self.calculations.newMeasurements()
-                print('new: steps:', steps, ', step frequency:', stepFq, 'hz, standard deviation:', fqStdev)
+                print('dt')
+                
+                
                 #Temporärt utseende
                 stepsArr = self.calculations.stepFrequency()
                 self.total_steps = len(stepsArr)
@@ -258,6 +259,10 @@ class GUI:
         except:
             messagebox.showinfo("Notification", "Fönstrena tar bara emot siffror! \nKontrollera att inget tecken kom med och försök igen.")
         self.updateValues(self.total_steps, self.step_frequency, self.stdv_steps, self.step_height, self.stdv_height,self.max_height,self.min_height,self.step_length,self.stdv_length)
+        self.calculations.getGaits(self.duration)
+        print('post-gf')
+        steps, stepFq, fqStdev = self.calculations.newMeasurements()
+        print('new: steps:', steps, ', step frequency:', stepFq, 'hz, standard deviation:', fqStdev)
         stepTemp = stepData.StepData(self.calculations.gf.steps, self.calculations.dt)
         plt.show()
 
