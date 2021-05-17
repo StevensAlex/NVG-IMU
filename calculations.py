@@ -18,11 +18,6 @@ class Calculations():
         timeStop = dataTime[last, 4]*3600 + dataTime[last, 5]*60 + dataTime[last, 6]
         timeTotal = timeStop - timeStart
         self.dt = timeTotal / len(dataArray[:,0])
-        print(self.dt)
-        length = self.dataArrays.getArray("dataArray")
-        time = self.dataArrays.timeConversion("dataArray", 0, len(length))
-        dt = time[len(time)-1]/len(length)
-        print(dt)
 
     def setArrayHandler(self, dataArrays):
         self.dataArrays = dataArrays
@@ -30,7 +25,7 @@ class Calculations():
     def setDataArray(self, startSek, stopSek, indexStart, indexStop):
         T = self.dataArrays.timeConversion("dataArray",indexStart,indexStop)
         cutArr = self.dataArrays.getArray("dataArray")[indexStart:indexStop, :]
-        if (startSek > 0):
+        if (startSek >= 1):
             intvalTimeStart = math.floor((len(cutArr)/(T[len(T)-1]-T[0]))*(startSek-1))
         else:
             intvalTimeStart = math.floor((len(cutArr)/(T[len(T)-1]-T[0]))*(startSek))
@@ -112,7 +107,6 @@ class Calculations():
                     if (stpFreq[0] > 1.4*stpFreq[1]):                                     #Remove intitial step that is too short (experimental frequency value)
                         fqArray.remove(fqArray[0])
                         stpFreq.remove(stpFreq[0]) 
-
         return stpFreq
     
     def newMeasurements(self):

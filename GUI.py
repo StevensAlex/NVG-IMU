@@ -1,6 +1,7 @@
 import numpy as np
 import tkinter as tk
 from tkinter import messagebox
+from tkinter import filedialog
 import arrayImporter as imp
 import arrayHandler as arrH
 import calculations as calc
@@ -17,26 +18,13 @@ class GUI:
         window.title("xIMU analysis")
         window.minsize(400,600)
         #window.geometry()
-        
-        self.min_t_val = 0
-        self.min_t_val = 0
-        self.indexStart=0
-        self.indexStop=0
-        self.total_steps = 0
-        self.step_frequency =0
-        self.stdv_steps =0
-        self.step_height = 0
-        self.stdv_height = 0
-        self.max_height = 0
-        self.min_height = 0
-        self.step_length = 0
-        self.stdv_length = 0
+
         self.stepsText = tk.StringVar(window)
         self.frequencyText = tk.StringVar(window)
         self.heightText1 = tk.StringVar(window)
         self.heightText2 = tk.StringVar(window)
         self.lengthText = tk.StringVar(window)
-        self.updateValues(self.total_steps,self.step_frequency,self.stdv_steps,self.step_height,self.stdv_height,self.max_height,self.min_height,self.step_length,self.stdv_length)
+        self.loading_label = tk.StringVar()
         self.stepsLabel = tk.Label(window, textvariable=self.stepsText, font=("Arial", 11)).place(x=35,y=150)
         self.frequencyLabel = tk.Label(window,textvariable=self.frequencyText,font=("Arial", 11)).place(x=35,y=170)
         self.heightLabel1 = tk.Label(window,textvariable=self.heightText1,font=("Arial", 11)).place(x=35,y=230)
@@ -49,7 +37,9 @@ class GUI:
             bg='gray',
             fg='black',
             command= self.enterData
-            ).place(x=50, y=25)
+            ).place(x=50, y=17)
+
+        tk.Label(window, textvariable=self.loading_label,fg='green',font=("Arial", 8)).place(x=42,y=47)
 
         tk.Button(
             window,
@@ -57,7 +47,7 @@ class GUI:
             bg='gray',
             fg='black',
             command=self.enterBet
-            ).place(x=165, y=25)
+            ).place(x=165, y=17)
 
         tk.Label(text="Tidsinterval:",font=("Arial", 10)).place(x=30, y=65)
         self.t1String = tk.StringVar(window)
@@ -85,14 +75,30 @@ class GUI:
             bg='gray',
             fg='black',
             command=self.plot2d
-            ).place(x=60, y=430)
+            ).place(x=60, y=440)
         tk.Button(
             window,
             text="3D",
             bg='gray',
             fg='black',
             command=self.plot3d
-            ).place(x=160, y=430)
+            ).place(x=160, y=440)
+
+        tk.Button(
+            window,
+            text="-",
+            fg='black',
+            command=self.plotPrevious
+            ).place(x=230,y=440)
+        
+        self.gaitNumber = tk.IntVar(window)
+        tk.Entry(window, textvariable=self.gaitNumber, width=4, state="disabled", font=("Arial", 11)).place(x=245, y=442)
+        tk.Button(
+            window,
+            text="+",
+            fg='black',
+            command=self.plotNext
+            ).place(x=275,y=440)
         
         tk.Label(text="Lägg till kommentar:",font=("Arial", 11)).place(x = 30, y = 500)
         self.comment = tk.StringVar(window)
@@ -102,18 +108,48 @@ class GUI:
             window,
             text="Spara",
             command=self.saveToFile
-            ).place(x=340, y=525)
-    
+            ).place(x=340, y=525)      
+        
+        self.resetWindow()
+
+    def resetWindow(self):
+        self.indexStart=0
+        self.indexStop=0
+        self.min_t_val = 0
+        self.max_t_val = 0
+        self.total_steps = 0
+        self.step_frequency =0
+        self.stdv_steps =0
+        self.step_height = 0
+        self.stdv_height = 0
+        self.max_height = 0
+        self.min_height = 0
+        self.step_length = 0
+        self.stdv_length = 0
+        self.timeStop = 0
+        self.t1String.set('')
+        self.t2String.set('')
+        self.comment.set('')
+        self.updateValues(self.total_steps,self.step_frequency,self.stdv_steps,self.step_height,self.stdv_height,self.max_height,self.min_height,self.step_length,self.stdv_length)
 
     def updateValues(self, total_steps, step_frequency, stdv_steps, step_height, stdv_height, max_height, min_height, step_length, stdv_length):
-        self.stepsText.set('Antal steg ' + f"{str(self.total_steps):<5}")
-        self.frequencyText.set('Medel '+ f"{str(self.step_frequency)+ ' m':<18}" +'  Stdv ' + f"{str(self.stdv_steps)+ ' m':<18}")
-        self.heightText1.set('Medelhöjd ' + f"{str(self.step_height) + ' m':<18}"+ '  Stdv ' + f"{str(stdv_height)+ ' m':<18}")
-        self.heightText2.set('Maxhöjd   '+ f"{str(self.max_height)+ ' m':<18}" + '  Minhöjd ' + f"{str(self.min_height)+ ' m':<18}")
-        self.lengthText.set('Medellängd ' + f"{str(self.step_length)+ ' m':<18}" + '  Stdv ' + f"{str(self.stdv_length)+ ' m':<18}")
+        stp_fq = round(self.step_frequency,4)
+        stdv_stp = round(self.stdv_steps,5)
+        stp_he = round(self.step_height,4)
+        stdv_he = round(self.stdv_height,5)
+        max_he = round(self.max_height,4)
+        min_he = round(self.min_height,4)
+        stp_le = round(self.step_length, 4)
+        stdv_le = round(self.stdv_length,5)
+        self.stepsText.set('Antal steg ' + f"{str(total_steps):<5}")
+        self.frequencyText.set('Medel '+ f"{str(stp_fq)+ ' Hz':<18}" +'  Stdv ' + f"{str(stdv_stp)+ ' Hz':<18}")
+        self.heightText1.set('Medelhöjd ' + f"{str(stp_he) + ' m':<18}"+ '  Stdv ' + f"{str(stdv_he)+ ' m':<18}")
+        self.heightText2.set('Maxhöjd   '+ f"{str(max_he)+ ' m':<18}" + '   Minhöjd ' + f"{str(min_he)+ ' m':<18}")
+        self.lengthText.set('Medellängd ' + f"{str(stp_le)+ ' m':<18}" + '  Stdv ' + f"{str(stdv_le)+ ' m':<18}") 
 
     def enterData(self):
-        try:
+        #try:
+            self.loading_label.set('')
             self.subject = imp.Subject()
             self.dataArrays = arrH.DataArrays()
             self.dataArrays.setArrays(self.subject)
@@ -140,7 +176,7 @@ class GUI:
                     newArr[i] = arrLA[i,5]
                 self.ax.plot(time, arrN[:,5],label="N-y")
             self.ax.plot(time, newArr,label="acc-y")
-
+             #Select indexes of start and stop
             self.minP = 0
             self.maxP = 0
             lineprops = {'color': 'red','linewidth': 4, 'alpha': 0.8}
@@ -196,8 +232,10 @@ class GUI:
         try:
             self.timeStart = float(self.t1String.get())
             self.timeStop = float(self.t2String.get())
-            if(self.timeStop - self.timeStart < 30 ):
-                mssagebox.showinfo("Notification", "Intervallet är för kort! \nMåste vara större än 30 sekunder!")
+            if(self.timeStart>self.timeStop):
+                messagebox.showinfo("Notification", "Starttiden kan inte vara större än sluttiden!")
+            elif(self.timeStop - self.timeStart < 30 ):
+                messagebox.showinfo("Notification", "Intervallet är för kort! \nMåste vara större än 30 sekunder!")
             elif(self.timeStop>self.timeStart and self.timeStart>=self.min_t_val and self.timeStop<=self.max_t_val):
                 self.calculations.setDataArray(self.timeStart,self.timeStop, self.indexStart,self.indexStop)
                 self.calculations.setDt(self.calculations.dataArrays.dataTime, self.dataArrays.dataArray)
@@ -215,8 +253,6 @@ class GUI:
                 messagebox.showinfo("Notification", "Starttiden kan inte vara mindre \nän "+ str(self.min_t_val)+ "!")
             elif(self.timeStop>self.max_t_val and self.max_t_val>0 ):
                 messagebox.showinfo("Notification", "Sluttiden kan inte vara större \nän "+ str(self.max_t_val)+ "!")
-            elif(self.timeStart>self.timeStop):
-                messagebox.showinfo("Notification", "Starttiden kan inte vara större än sluttiden!")
             else:
                 messagebox.showinfo("Notification", "Ingen data är tillgänglig! \nVänligen kontrollera att filer är \nimporterade och betingelse är vald.")
         except:
@@ -235,24 +271,43 @@ class GUI:
         plt.title('Gait movement')
         plt.show()
 
+    def plotPrevious(self):
+        self.gaitNumber.set(self.gaitNumber.get()-1)
+        print("-")
+
+    def plotNext(self):
+        self.gaitNumber.set(self.gaitNumber.get()+1)
+        print("+")
+
     def saveToFile(self):
         try:
-        #fN = imp.Subject.getFileName(self)
-        #print(fN)
-        #csv.register_dialect('myDialect', delimiter='/', quoting=csv.QUOTE_NONE)
-            myData = [self.timeStart, self.timeStop, str(self.total_steps), str(self.step_frequency), str(self.stdv_steps),str(self.step_height), str(self.stdv_height), 
-                    str(self.max_height),str(self.min_height),str(self.step_length),str(self.stdv_length), self.comment.get()]
-            print(myData)
-        #myFile = open('resultat.csv', 'w')
-        #with myFile:
-        #    writer = csv.writer(myFile, dialect='myDialect')
-        #    myFields = ['Startsek', 'Stopsek', 'Antal steg', 'Stegfrekvens', 'Stdv stegfrekvens', 'Medelhöjd', 'Stdv steghöjd',
-        #     '         Maxhöjd', 'Minhöjd', 'Steglängd', 'Stdv steglängd', 'Kommentar']
-        #    writer = csv.DictWriter(myFile, fieldnames=myFields)    
-        #    writer.writeheader()
-        #    writer.writerow(myData)
+            data_name = self.dataArrays.getArray("fileName").split('/')       #funkar
+            data_name = data_name[len(data_name)-1]
+            file_name = filedialog.asksaveasfilename(title="Save data",filetypes=(("csv files", "*csv"),("all files", "")))
+            if file_name:
+                if file_name.endswith(".csv"):
+                    pass
+                else:
+                    file_name = f'{file_name}.csv'
+
+            csv.register_dialect('myDialect', delimiter=',', quoting=csv.QUOTE_ALL)
+            with open(file_name, 'a',  newline='') as myFile:
+                writer = csv.writer(myFile, dialect='myDialect')
+                myFields = ['Filnamn', 'Startsek', 'Stopsek', 'Antal steg', 'Stegfrekvens', 'Stdv stegfrekvens', 'Medelhöjd', 'Stdv steghöjd',
+                            'Maxhöjd', 'Minhöjd', 'Steglängd', 'Stdv steglängd', 'Kommentar']
+                
+                writer = csv.DictWriter(myFile, fieldnames=myFields)
+                self.header_check = np.genfromtxt(file_name, delimiter=',')
+                if( len(self.header_check) == 0 ):                          #Assumes that if the file isn't new that it already have correct header
+                    writer.writeheader()
+                
+                writer.writerow({'Filnamn': data_name,'Startsek': self.timeStart, 'Stopsek': self.timeStop, 'Antal steg': self.total_steps, 
+                                'Stegfrekvens':self.step_frequency, 'Stdv stegfrekvens':self.stdv_steps, 'Medelhöjd':self.step_height, 'Stdv steghöjd':self.stdv_height, 
+                                'Maxhöjd':self.max_height, 'Minhöjd':self.min_height, 'Steglängd':self.step_length, 'Stdv steglängd':self.stdv_length, 
+                                   'Kommentar':self.comment.get()})
         except:
             messagebox.showwarning("Notification", "Saknas tillräckligt med information! \nHar beräkning genomförts?")
+
 window = tk.Tk()
 GUI(window)
 window.mainloop()
