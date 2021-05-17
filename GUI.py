@@ -10,6 +10,7 @@ from matplotlib.widgets import LassoSelector
 from mpl_toolkits.mplot3d import axes3d
 import statistics as stat                   #temporärt i GUI
 import csv
+import stepData
 
 class GUI:
 
@@ -152,12 +153,10 @@ class GUI:
             self.subject = imp.Subject()
             self.dataArrays = arrH.DataArrays()
             self.dataArrays.setArrays(self.subject)
-            data_name = self.dataArrays.getArray("fileName").split('/')        #funkar
-            self.loading_label.set(str(data_name[len(data_name)-1]) +' laddat!')
-            self.resetWindow()
-            messagebox.showinfo("Notification","Datat har laddat färdigt!")
-        #except:
-            #messagebox.showerror("Notification","Datat kunde inte laddas! \nFörsök igen!")
+            tk.Label(window, text="Laddat",font=("Arial", 8)).place(x=55,y=50)
+            messagebox.showinfo("Notification","Datan har laddat färdigt!")
+        except:
+            messagebox.showerror("Notification","Datan kunde inte laddas! \nFörsök igen!")
 
     def enterBet(self):
         try:
@@ -240,14 +239,16 @@ class GUI:
             elif(self.timeStop>self.timeStart and self.timeStart>=self.min_t_val and self.timeStop<=self.max_t_val):
                 self.calculations.setDataArray(self.timeStart,self.timeStop, self.indexStart,self.indexStop)
                 self.calculations.setDt(self.calculations.dataArrays.dataTime, self.dataArrays.dataArray)
-                a = self.calculations.getGaits()
-                self.calculations.calcOutput()
-                #--Temporärt utseende-------------------------------------------#
+                self.calculations.getGaits()
+                print('post-gf')
+                steps, stepFq, fqStdev = self.calculations.newMeasurements()
+                print('new: steps:', steps, ', step frequency:', stepFq, 'hz, standard deviation:', fqStdev)
+                #Temporärt utseende
                 stepsArr = self.calculations.stepFrequency()
                 self.total_steps = len(stepsArr)
                 self.step_frequency = stat.mean(stepsArr)
                 self.stdv_steps = stat.stdev(stepsArr)
-                #---------------------------------------------------------------#
+                print('old: steps:', self.total_steps, ', step frequency:', self.step_frequency, 'hz, standard deviation:', self.stdv_steps)
             elif(self.timeStart<self.min_t_val and self.max_t_val>0 ):
                 messagebox.showinfo("Notification", "Starttiden kan inte vara mindre \nän "+ str(self.min_t_val)+ "!")
             elif(self.timeStop>self.max_t_val and self.max_t_val>0 ):
@@ -257,6 +258,8 @@ class GUI:
         except:
             messagebox.showinfo("Notification", "Fönstrena tar bara emot siffror! \nKontrollera att inget tecken kom med och försök igen.")
         self.updateValues(self.total_steps, self.step_frequency, self.stdv_steps, self.step_height, self.stdv_height,self.max_height,self.min_height,self.step_length,self.stdv_length)
+        stepTemp = stepData.StepData(self.calculations.gf.steps, self.calculations.dt)
+        plt.show()
 
     def plot2d(self):   #Not yet done
         print("2D")

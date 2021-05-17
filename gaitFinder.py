@@ -8,21 +8,21 @@ class GaitFinder:
         #Prepare data
         self.gyroZ = dataArray[:,3]
         self.filZ = self.filter(self.gyroZ)
-        self.timeArr = timeArr
-        plt.figure()
+        #plt.figure()
 
         #Calculate new data
         self.peaks = self.findPeaks(self.filZ)
         self.strikes = self.findStrikes(self.peaks, self.filZ)
         self.offs = self.findOffs(self.strikes, self.filZ)
         self.splits = self.findSplits(self.filZ, self.strikes, self.offs)
-        self.cutArr, self.splits = self.dataCutter(self.splits, self.filZ, dt, duration,timeArr)
+        self.splits = self.dataCutter(self.splits, dataArray, dt)
         self.fqs = self.getFqs(self.splits, dt)
+        self.steps = self.getStepsRaw(dataArray)
 
         #===========Plot-stuff==============
         #xArr = np.arange(len(self.gyroZ))
-        #plt.plot(self.timeArr, self.gyroZ, label='raw')
-        #plt.plot(self.timeArr, self.filZ, label='filtered')
+        #plt.plot(xArr, self.gyroZ, label='raw')
+        #plt.plot(xArr, self.filZ, label='filtered')
         #plt.legend()
         #for peak in self.peaks:
         #    plt.axvline(peak, color = 'r', ymin= 0.15, ymax=0.85)
@@ -30,11 +30,14 @@ class GaitFinder:
         #    plt.axvline(strike, color = 'g', ymin= 0.15, ymax=0.85)
         #for off in self.offs:
         #    plt.axvline(off, color = 'm', ymin= 0.15, ymax=0.85)
+        #plt.figure()
+        #for step in self.steps:
+        #    plt.plot(step[:,0], step[:, 3])
         #plt.show()
         #===========Plot-stuff==============
 
-
-    def filter(self, data):           # A median filter on a 1d array
+    # A median filter on a 1d array
+    def filter(self, data):
         windowSize = 5
         radius = int(windowSize/2)
         newData = np.zeros(len(data))
@@ -42,6 +45,7 @@ class GaitFinder:
             newData[i] = stat.median(data[i-radius:i+radius])
         return newData
 
+    #find the peaks of angular velocity in the swing phase
     def findPeaks(self, data):
         peaks = []
         i = 0
@@ -56,6 +60,7 @@ class GaitFinder:
             i += 1
         return peaks
 
+    #find all heel-strikes
     def findStrikes(self, peaks, data):
         threshold = 90
         heelStrikes = []
@@ -74,6 +79,7 @@ class GaitFinder:
             i += 1
         return heelStrikes
 
+    #find all toe-off points
     def findOffs(self, strikes, data):
         threshold = 120
         offs = []
@@ -89,15 +95,16 @@ class GaitFinder:
             i += 1
         return offs
 
+    #find points where each gait cycle is to be split
     def findSplits(self, data, strikes, offs):
         splits = []
-        for i in range(len(offs)):
+        for i in range(len(strikes)):
             raw = data[strikes[i]:offs[i]]
             axis = np.arange(strikes[i], offs[i])
             model = np.poly1d(np.polyfit(axis, raw, 2))
             split = strikes[i] + np.argmin(model(axis))
-            plt.plot(axis, model(axis), color='b')
-            plt.axvline(split, color = 'b', ymin= 0.15, ymax=0.85)
+            #plt.plot(axis, model(axis), color='b')
+            #plt.axvline(split, color = 'b', ymin= 0.15, ymax=0.85)
             splits.append(split)
         return splits
 
@@ -107,21 +114,26 @@ class GaitFinder:
         finalSplitIndex = 0
         for i in range(len(splits) - 2):
             t += (splits[i+1] - splits[i]) * dt
-            time.append(t)
-            if( i == len(splits)-3):
-                finalSplitIndex = len(splits)-1
-            if t > duration+time[0]:
-               finalSplitIndex = i+1
-               break
-        cutArr = data[splits[0]:splits[finalSplitIndex]]
+            if t > minTime:
+                finalSplitIndex = i+1
+                break
         splits = splits[0:finalSplitIndex]
-        return cutArr, splits
-        
+        return splits
+    
+    #get a list containing the step frequency for each step
     def getFqs(self, splits, dt):
         fqs = []
         for i in range(0, len(splits)-1):
             t = (splits[i+1] - splits[i]) * dt
             fqs.append(1/t)
         return fqs
+
+    #get a list containing arrays of raw angular velocity and acceleration data for each step
+    def getStepsRaw(self, dataArray):
+        steps = []
+        for i in range(1, len(self.splits)-1):
+            step = dataArray[self.splits[i-1]:self.splits[i],:]
+            steps.append(step)
+        return steps
             
 
