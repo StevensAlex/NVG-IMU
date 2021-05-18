@@ -256,26 +256,24 @@ class GUI:
     def saveAsFile(self):
         try:
             self.save_filename = filedialog.asksaveasfilename(title="Save data",filetypes=(("csv files", "*csv"),("all files", "")))
+            if(self.save_filename != ''):
+                if self.save_filename.endswith(".csv"):
+                    pass
+                else:
+                    self.save_filename = f'{self.save_filename}.csv'
+                self.saveToFile()
         except:
-            self.save_filename = ''
             messagebox.showwarning("Notification", "Något hände!")
-        else:
-            if self.save_filename.endswith(".csv"):
-                pass
-            else:
-                self.save_filename = f'{self.save_filename}.csv'
-            self.saveToFile()
+            
 
     def saveToFile(self):
         try:
-            print(self.save_filename)
             if self.save_filename == '':
                 self.saveAsFile()
             else:
                 data_name = self.dataArrays.getArray("fileName").split('/')       #funkar
                 data_name = data_name[len(data_name)-1]
-                
-                csv.register_dialect('myDialect', delimiter=',', quoting=csv.QUOTE_ALL)
+                csv.register_dialect('myDialect', delimiter=',', quoting=csv.QUOTE_NONE)
                 with open(self.save_filename, 'a',  newline='') as myFile:
                     myFields = ['Filnamn', 'Startsek', 'Stopsek', 'Antal steg', 'Stegfrekvens', 'Stdv stegfrekvens', 'Medelhöjd', 'Stdv steghöjd',
                                 'Maxhöjd', 'Minhöjd', 'Steglängd', 'Stdv steglängd', 'Kommentar']
@@ -290,6 +288,7 @@ class GUI:
                         'Maxhöjd':self.max_height, 'Minhöjd':self.min_height, 'Steglängd':self.step_length, 'Stdv steglängd':self.stdv_length, 
                         'Kommentar':self.comment.get()})
         except:
+            self.save_filename = ''
             messagebox.showwarning("Notification", "Saknas tillräckligt med information! \nHar beräkning genomförts?")
 
 window = tk.Tk()
