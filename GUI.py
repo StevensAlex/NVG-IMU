@@ -224,7 +224,6 @@ class GUI:
                 self.calculations.setDt(self.calculations.dataArrays.dataTime, self.dataArrays.dataArray)
                 print('dt')
                 
-                
                 #Temporärt utseende
                 stepsArr = self.calculations.stepFrequency()
                 self.total_steps = len(stepsArr)
@@ -239,13 +238,14 @@ class GUI:
                 messagebox.showinfo("Notification", "Ingen data är tillgänglig! \nVänligen kontrollera att filer är \nimporterade och betingelse är vald.")
         except:
             messagebox.showinfo("Notification", "Fönstrena tar bara emot siffror! \nKontrollera att inget tecken kom med och försök igen.")
-        self.updateValues(self.total_steps, self.step_frequency, self.stdv_steps, self.step_height, self.stdv_height,self.max_height,self.min_height,self.step_length,self.stdv_length)
+        self.updateValues(self.total_steps, self.step_frequency, self.stdv_steps, self.step_height, self.stdv_height,self.max_height,
+                          self.min_height,self.step_length,self.stdv_length)
         self.calculations.getGaits(self.duration)
         print('post-gf')
         steps, stepFq, fqStdev = self.calculations.newMeasurements()
         print('new: steps:', steps, ', step frequency:', stepFq, 'hz, standard deviation:', fqStdev)
         stepTemp = stepData.StepData(self.calculations.gf.steps, self.calculations.dt)
-        plt.show()
+        plt.show()    
 
     def plot2d(self):   #Not yet done
         print("2D")
