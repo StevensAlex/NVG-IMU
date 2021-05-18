@@ -38,9 +38,9 @@ class Calculations():
         self.dataArr = cutArr[intvalTimeStart:intvalTimeStop,:]
         self.timeArr = T[intvalTimeStart:intvalTimeStop]
 
-    def getGaits(self):
-        self.gf = gaitFinder.GaitFinder(self.dataArr, self.dt,self.stopTime-self.startTime,self.timeArr)
-        return 0
+    def getGaits(self, duration):
+        self.gf = gaitFinder.GaitFinder(self.dataArr, self.dt, duration)
+        
 
     def betDetection(self, startIndex, stopIndex):
         dataArray = self.dataArrays.getArray("dataArray")
@@ -108,11 +108,11 @@ class Calculations():
                         fqArray.remove(fqArray[0])
                         stpFreq.remove(stpFreq[0]) 
         return stpFreq
+    
+    def newMeasurements(self):
+        steps = len(self.gf.splits) - 1
+        stepFq = stat.mean(self.gf.fqs)
+        fqStdev = stat.stdev(self.gf.fqs)
 
-    def calcOutput(self):
-        fq = self.gf.getFqs(self.gf.splits,self.dt)
-        print(len(fq), 'st ')
-        mf = stat.mean(fq)
-        print("medel �r " +str("{0:.4f}".format(mf)) + " hz")
-        std = round(stat.stdev(fq),5)
-        print("stdv �r "+ str(std))
+
+        return steps, stepFq, fqStdev
