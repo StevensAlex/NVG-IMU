@@ -17,7 +17,7 @@ class GUI:
 
     def __init__(self, window):
         window.title("xIMU analysis")
-        window.minsize(400,600)
+        window.minsize(410,600)
         #window.geometry()
         
         self.stepsText = tk.StringVar(window)
