@@ -46,8 +46,8 @@ class Calculations():
         dataArray = self.dataArrays.getArray("dataArray")
         def getPoints(dataArray, RMS):
             packets = []
-            points = dataArray[startIndex:stopIndex,0][np.nonzero(dataArray[startIndex:stopIndex,5] > 2.4*RMS)]           #Assign acc(Z)Value > 1.7xRMS to corrresponding packet
-            for i in range (1,points.size):                                         #Assign packets that lies withing sf/2,
+            points = dataArray[startIndex:stopIndex,0][np.nonzero(dataArray[startIndex:stopIndex,5] > 2.4*RMS)]             #Assign acc(Y)Value > 2.4xRMS to corrresponding packet
+            for i in range (1,points.size):                                                                                 #Assign packets that lies withing sf/2,
                 if points[i]-points[i-1] < sampleFrekvens/2:
                     packets.append(points[i])
             return packets
@@ -88,7 +88,7 @@ class Calculations():
                 indexes.append(np.where(dataArray[:,0] == packet))
         return indexes
 
-    def stepFrequency(self):
+    def stepFrequency(self):                        #Tills gaitfinder är helt pålitlig
         fqArray = []
         stpFreq = []
         cutXArr = self.dataArr[:,4]
@@ -113,6 +113,4 @@ class Calculations():
         steps = len(self.gf.splits) - 1
         stepFq = stat.mean(self.gf.fqs)
         fqStdev = stat.stdev(self.gf.fqs)
-
-
         return steps, stepFq, fqStdev
