@@ -130,10 +130,15 @@ class StepData:
             R_se = np.array([[math.cos(phi)*math.cos(psi), -math.cos(phi)*math.sin(psi), math.sin(phi)],
                              [math.sin(theta)*math.sin(phi)*math.cos(psi) + math.cos(theta)*math.sin(psi), -math.sin(theta)*math.sin(phi)*math.sin(psi) + math.cos(theta)*math.cos(psi), -math.sin(theta)*math.cos(phi)],
                              [-math.cos(theta)*math.sin(phi)*math.cos(psi), math.cos(theta)*math.sin(phi)*math.sin(psi) + math.sin(theta)*math.cos(psi), math.cos(theta)*math.cos(phi)]])
-            a_e = np.dot(R_se, a_s) - np.array([[-1],[0],[0]])
-            comp = float(a_e[0])
-            a_e = a_e - np.array([[comp],[0],[0]])
-
+            R_e = np.array([[math.cos(phi)*math.cos(psi)+math.sin(phi)*math.sin(theta)*math.sin(psi),-math.cos(phi)*math.sin(psi)+math.sin(phi)*math.sin(theta)*math.cos(psi), math.sin(phi)*math.cos(theta)],
+                            [math.cos(theta)*math.sin(psi),math.cos(theta)*math.cos(psi),-math.sin(theta)],
+                            [-math.sin(phi)*math.cos(psi)+math.cos(phi)*math.sin(theta)*math.sin(psi),math.sin(phi)*math.sin(psi)+math.cos(phi)*math.sin(theta)*math.cos(psi),math.cos(phi)*math.cos(theta)]])
+            a_e = np.dot(R_se, a_s) - np.array([[1],[0],[0]])
+            #compX = float(a_e[0])
+            #compY = float(a_e[1])
+            #compZ = float(a_e[2])
+            #a_e = a_e - np.array([[compX],[0],[0]])
+            
             eulerList = [eulerVec]
             a_eList = [a_e]
             angVelList = [np.array([[math.radians(step[0, 1])],[math.radians(step[0, 2])],[math.radians(step[0, 3])]])]
@@ -151,8 +156,10 @@ class StepData:
                 R_se = np.array([[math.cos(phi)*math.cos(psi), -math.cos(phi)*math.sin(psi), math.sin(phi)],
                                  [math.sin(theta)*math.sin(phi)*math.cos(psi) + math.cos(theta)*math.sin(psi), -math.sin(theta)*math.sin(phi)*math.sin(psi) + math.cos(theta)*math.cos(psi), -math.sin(theta)*math.cos(phi)],
                                  [-math.cos(theta)*math.sin(phi)*math.cos(psi), math.cos(theta)*math.sin(phi)*math.sin(psi) + math.sin(theta)*math.cos(psi), math.cos(theta)*math.cos(phi)]])
-                
-                a_e = np.dot(R_se, a_s) - np.array([[-1],[0],[0]]) - np.array([[comp],[0],[0]])
+                R_e = np.array([[math.cos(phi)*math.cos(psi)+math.sin(phi)*math.sin(theta)*math.sin(psi),-math.cos(phi)*math.sin(psi)+math.sin(phi)*math.sin(theta)*math.cos(psi), math.sin(phi)*math.cos(theta)],
+                            [math.cos(theta)*math.sin(psi),math.cos(theta)*math.cos(psi),-math.sin(theta)],
+                            [-math.sin(phi)*math.cos(psi)+math.cos(phi)*math.sin(theta)*math.sin(psi),math.sin(phi)*math.sin(psi)+math.cos(phi)*math.sin(theta)*math.cos(psi),math.cos(phi)*math.cos(theta)]])
+                a_e = np.dot(R_se, a_s) - np.array([[1],[0],[0]]) #- np.array([[compX],[0],[0]])
                 a_eList.append(a_e)
             for i in range(len(a_eList)):
                 step[i,4] = a_eList[i][0]
