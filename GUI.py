@@ -19,28 +19,20 @@ class GUI:
         window.title("xIMU analysis")
         window.minsize(410,600)
         #window.geometry()
-        
-        self.stepsText = tk.StringVar(window)
-        self.frequencyText = tk.StringVar(window)
-        self.heightText1 = tk.StringVar(window)
-        self.heightText2 = tk.StringVar(window)
-        self.lengthText = tk.StringVar(window)
-        self.loading_text = tk.StringVar()
-        self.stepsLabel = tk.Label(window, textvariable=self.stepsText, font=("Arial", 11)).place(x=35,y=150)
-        self.frequencyLabel = tk.Label(window,textvariable=self.frequencyText,font=("Arial", 11)).place(x=35,y=170)
-        self.heightLabel1 = tk.Label(window,textvariable=self.heightText1,font=("Arial", 11)).place(x=35,y=230)
-        self.heightLabel2 = tk.Label(window,textvariable=self.heightText2,font=("Arial", 11)).place(x=35,y=250)
-        self.lengthLabel = tk.Label(window,textvariable=self.lengthText,font=("Arial", 11)).place(x=35,y=310)
 
+        #-----  Upper buttons area -----------
         self.progress = Progressbar(window,orient='horizontal',length=100, mode='indeterminate')
         self.fileimp_btn = tk.Button(window, text="Välj fil", bg='gray', fg='black', command= self.enterData)
         self.fileimp_btn.place(x=50, y=17)
+        self.loading_text = tk.StringVar()
         self.loading_label = tk.Label(window, textvariable=self.loading_text,fg='green',font=("Arial", 8))
 
         self.betsel_btn = tk.Button(window, text="Välj betingelse", bg='gray', fg='black', command=self.enterBet)
         self.betsel_btn.place(x=165, y=17)
+        #-----------------------------------------------
 
-        tk.Label(text="Tidsinterval:",font=("Arial", 10)).place(x=30, y=67)
+        #-----  Time inteval and make calculations---
+        tk.Label(text="Tidsintervall:",font=("Arial", 10)).place(x=30, y=67)
         self.t1String = tk.StringVar(window)
         self.t2String = tk.StringVar(window)
         self.t1 = tk.Entry(window, textvariable=self.t1String, width=6, bg='#FDF0CC', font=("Arial", 11)).place(x=35, y=88)         
@@ -48,13 +40,27 @@ class GUI:
         
         self.makecalc_btn = tk.Button(window, text="Kör!", bg='green', fg='white', command=self.runCalc)
         self.makecalc_btn.place(x=180, y=85)
-        
+        #-----------------------------------------------
+
+        #-----  Displaying the results --------------
+        self.stepsText = tk.StringVar(window)
+        self.frequencyText = tk.StringVar(window)
+        self.heightText1 = tk.StringVar(window)
+        self.heightText2 = tk.StringVar(window)
+        self.lengthText = tk.StringVar(window)
+        self.stepsLabel = tk.Label(window, textvariable=self.stepsText, font=("Arial", 11)).place(x=35,y=150)
+        self.frequencyLabel = tk.Label(window,textvariable=self.frequencyText,font=("Arial", 11)).place(x=35,y=170)
+        self.heightLabel1 = tk.Label(window,textvariable=self.heightText1,font=("Arial", 11)).place(x=35,y=230)
+        self.heightLabel2 = tk.Label(window,textvariable=self.heightText2,font=("Arial", 11)).place(x=35,y=250)
+        self.lengthLabel = tk.Label(window,textvariable=self.lengthText,font=("Arial", 11)).place(x=35,y=310)
         tk.Label(text="Stegfrekvens:",font=("Arial", 15)).place(x=30, y=120)        
         tk.Label(text="Steghöjd:",font=("Arial", 15)).place(x=30, y=200)
         tk.Label(text="Steglängd:",font=("Arial", 15)).place(x=30, y=280)
         #tk.Label(text="Sidostegsvariation:",font=("Arial", 15)).place(x = 30, y = 340)
         tk.Label(text="Se grafer:",font=("Arial", 15)).place(x=30, y=400)
+        #---------------------------------------------------
 
+        #-----  Area for plot buttons-------
         self.twod_btn = tk.Button(window, text="2D", bg='gray', fg='black', state='disabled', command=self.plot2d)
         self.twod_btn.place(x=60, y=440)
         self.threed_btn = tk.Button(window, text="3D", bg='gray', fg='black', state='disabled', command=self.plot3d)
@@ -68,15 +74,18 @@ class GUI:
         self.gaitDisplay.bind('<Return>',self.plotentry)
         self.nxtplot_btn = tk.Button(window, text="+", fg='black', state='disabled', command=self.plotNext)
         self.nxtplot_btn.place(x=275,y=440)
-        
+        #-----------------------------------
+
+        #-----  Area for comment and save file ---------
         tk.Label(text="Lägg till kommentar:",font=("Arial", 11)).place(x = 30, y = 500)
         self.comment = tk.StringVar(window)
         self.entry = tk.Entry(window,textvariable=self.comment, width=31, borderwidth=5, font=("Arial", 12)).place(x=35, y=525)
-
+        
         self.save_filename = ''
         self.saveas_btn = tk.Button(window, text="Spara som", command=self.saveAsFile).place(x=337, y=525)
         self.save_btn = tk.Button(window, text="Spara", command=self.saveToFile).place(x=337, y=555)
-        
+        #------------------------------------
+
         self.resetWindow()
 
     def resetWindow(self):
@@ -168,7 +177,7 @@ class GUI:
             lineprops = {'color': 'red','linewidth': 4, 'alpha': 0.8}
             self.lasso = LassoSelector(self.ax, onselect = self.onSelect, lineprops= lineprops, button=1)
             self.fig.canvas.mpl_connect("key_press_event", self.accept)
-            self.ax.set_title("Press enter to accept selected points.")
+            self.ax.set_title("Tryck på enter för att acceptera valda punkerna.")
             plt.legend()
             plt.show()
         except:
@@ -225,19 +234,10 @@ class GUI:
             elif(self.timeStop>self.timeStart and self.timeStart>=self.min_t_val and self.timeStop<=self.max_t_val):
                 self.calculations.setDataArray(self.timeStart,self.timeStop, self.indexStart,self.indexStop)
                 self.duration = self.timeStop - self.timeStart
-                print('set')
                 self.calculations.setDt(self.calculations.dataArrays.dataTime, self.dataArrays.dataArray)
-                print('dt')
                 self.calculations.getGaits(self.duration)
-                steps, stepFq, fqStdev = self.calculations.newMeasurements()
-                print('new: steps:', steps, ', step frequency:', stepFq, 'hz, standard deviation:', fqStdev)
-                #Temporärt utseende-------------------------
-                stepsArr = self.calculations.stepFrequency()
-                self.total_steps = len(stepsArr)
-                self.step_frequency = stat.mean(stepsArr)
-                self.stdv_steps = stat.stdev(stepsArr)
-                #------------------------------------------------
-                print('old: steps:', self.total_steps, ', step frequency:', self.step_frequency, 'hz, standard deviation:', self.stdv_steps)
+                (self.total_steps, self.step_frequency, self.stdv_steps, self.step_height, self.stdv_height, self.max_height, self.min_height, 
+                 self.step_length, self.stdv_length, self.xList, self.yList, self.zList )= self.calculations.newMeasurements()
                 self.togglePlotButtons('normal')
             elif(self.timeStart<self.min_t_val and self.max_t_val>0 ):
                 messagebox.showinfo("Notification", "Starttiden kan inte vara mindre \nän "+ str(self.min_t_val)+ "!")
@@ -247,31 +247,38 @@ class GUI:
                 messagebox.showinfo("Notification", "Ingen data är tillgänglig! \nVänligen kontrollera att filer är \nimporterade och betingelse är vald.")
         except:
             messagebox.showinfo("Notification", "Fönstrena tar bara emot siffror! \nKontrollera att inget tecken kom med och försök igen.")
-        self.updateValues(self.total_steps, self.step_frequency, self.stdv_steps, self.step_height, self.stdv_height,self.max_height,
+            self.updateValues(self.total_steps, self.step_frequency, self.stdv_steps, self.step_height, self.stdv_height,self.max_height,
                           self.min_height,self.step_length,self.stdv_length)
-        print('post-gf')
-        self.stepTemp = stepData.StepData(self.calculations.gf.steps, self.calculations.dt)
-        plt.show()    
+            plt.show()    #Temporärt för att kolla att beräkningar sker korrekt
 
     def plot2d(self):   #Not yet done
         #try:
-            print('pList:', len(self.stepTemp.pLists2))
-            print('pList:', len(self.stepTemp.pLists2[0]))
-            print('pList:', len(self.stepTemp.pLists2[0][0]))
-            print("2D")
-            self.gaitNumber.set(1)
-            self.figure, self.axs = plt.subplots()
-            self.axs.plot(self.stepTemp.pLists2[0][0],self.stepTemp.pLists2[0][1])
+            num = self.gaitNumber.get()
+            if( num < 1 or num > len(self.xList)):
+                num = 1
+            self.gaitNumber.set(num)
+            self.twofig, self.twoax = plt.subplots()
+            cutIndex = np.asarray(self.xList[num-1] == 0,).nonzero()
+            self.twoax.plot(self.xList[num-1,0:cutIndex[0][1]],self.yList[num-1,0:cutIndex[0][1]])
+            plt.title('Steglängd och höjd')
             plt.show()
         #except:
             #messagebox.showerror("Notification", "Fel uppstod! \nHar data beräknats?")
 
     def plot3d(self):   #Not yet done
-        print("3D")
-        ax = plt.axes(projection='3d')
-        ax.scatter3D(p_xList, p_yList, p_zList);
-        plt.title('Gait movement')
-        plt.show()
+        #try:
+            num = self.gaitNumber.get()
+            if( num < 1 or num > len(self.xList)):
+                num = 1
+            self.gaitNumber.set(num)
+            self.threefig, self.threeax = plt.subplots()
+            cutIndex = np.asarray(self.xList[num-1] == 0,).nonzero()
+            self.threeax = plt.axes(projection='3d')
+            self.threeax.scatter3D(self.xList[num-1,0:cutIndex[0][1]],self.zList[num-1,0:cutIndex[0][1]],self.yList[num-1,0:cutIndex[0][1]]);   
+            plt.title('Gait movement')
+            plt.show()
+        #except:
+            #messagebox.showerror("Notification", "Fel uppstod! \nHar data beräknats?")
 
     def plotPrevious(self):
         if( self.gaitNumber.get() > 1): 
@@ -279,25 +286,35 @@ class GUI:
             self.plotentry('<Return>')
 
     def plotNext(self):
-        if( self.gaitNumber.get() < len(self.stepTemp.pLists2)):
-            self.gaitNumber.set(self.gaitNumber.get()+1)
-            self.plotentry('<Return>')
+        try:
+            if( self.gaitNumber.get() < len(self.xList)):
+                print(len(self.xList))
+                self.gaitNumber.set(self.gaitNumber.get()+1)
+                self.plotentry('<Return>')
+        except:
+            messagebox.showwarning("Notification", "Endast heltal får stå i rutan!")
 
     def plotentry(self, event):
-        try:
-            if(self.gaitNumber.get()> 0 and self.gaitNumber.get() <= len(self.stepTemp.pLists2)):
+        #try:
+            if(self.gaitNumber.get()> 0 and self.gaitNumber.get() <= len(self.xList)):
                 num = self.gaitNumber.get()
                 self.gaitNumber.set(num)
                 #----Plotting current gaitnr--- not yet done
                 print(num)
-                self.figure.clf()
-                self.axs.plot(self.stepTemp.pLists2[num-1][0],self.stepTemp.pLists2[num-1][1])
-                self.figure.canvas.draw()
+                self.twofig.clf()
+                self.threefig.clf()
+                cutIndex = np.asarray(self.xList[num-1] == 0,).nonzero()
+                self.twoax.plot(self.xList[num-1,0:cutIndex[0][1]],self.yList[num-1,0:cutIndex[0][1]])
+                self.threeax.scatter3D(self.xList[num-1,0:cutIndex[0][1]],self.zList[num-1,0:cutIndex[0][1]],self.yList[num-1,0:cutIndex[0][1]]);
+                self.twofig.draw()
+                self.threefig.draw()
                 #------------------------------
-            elif(self.gaitNumber.get()<1 or self.gaitNumber.get()>len(self.stepTemp.pLists2)):
-                messagebox.showwarning("Notification", "Steget du kollar på måste vara mellan \n1 och "+ str(len(self.stepTemp.pLists2))+"!")
-        except:
-            messagebox.showwarning("Notification", "Tar bara emot heltal!")
+            elif(self.gaitNumber.get()<1 or self.gaitNumber.get()>len(self.xList)):
+                messagebox.showwarning("Notification", "Steget du kollar på måste vara mellan \n1 och "+ str(len(self.xList))+"!")
+            else:
+                messagebox.showwarning("notification", "Öppna graf genom att klicka på ""2D"" eller ""3D""\nför att se skillnad!")
+        #except:
+            #messagebox.showwarning("Notification", "Tar bara emot heltal!")
 
     def togglePlotButtons(self, argument)-> None:
         if( argument == 'normal' or argument == 'disabled'):
