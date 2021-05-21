@@ -3,6 +3,7 @@ import math
 import arrayHandler as arrH
 import statistics as stat
 import gaitFinder
+import stepData
 
 class Calculations():
     def __init__(self, dataArrays):
@@ -110,7 +111,23 @@ class Calculations():
         return stpFreq
     
     def newMeasurements(self):
-        steps = len(self.gf.splits) - 1
+        steps = len(self.gf.splits)
         stepFq = stat.mean(self.gf.fqs)
         fqStdev = stat.stdev(self.gf.fqs)
-        return steps, stepFq, fqStdev
+        stepTemp = stepData.StepData(self.gf.steps, self.dt)
+        xArr, yArr, zArr = stepTemp.getPositionalArrays(stepTemp.pLists2)
+        xArr = -xArr                                        #Since the data seems to be negative rather than positive
+        yArr = -yArr
+        zArr = -zArr
+        height = []
+        length = []
+        for i in range(len(xArr)):
+            height.append(np.amax(yArr[i]))
+            length.append(np.amax(xArr[i]))
+        mheight = stat.mean(height)
+        hghtStdev = stat.stdev(height)
+        hghtMax = np.amax(height)
+        hghtMin = np.amin(height)
+        mlength = stat.mean(length)
+        lenStdev = stat.stdev(length)
+        return steps, stepFq, fqStdev, mheight, hghtStdev, hghtMax, hghtMin, mlength, lenStdev, xArr, yArr, zArr

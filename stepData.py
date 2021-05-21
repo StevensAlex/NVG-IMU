@@ -266,4 +266,15 @@ class StepData:
             pLists.append(pList)
         return pLists
 
-        
+    def getPositionalArrays(self, pLists2):
+        p_xList2 = np.zeros([len(pLists2),len(pLists2)*5],dtype=float)
+        p_yList2 = np.zeros([len(pLists2),len(pLists2)*5],dtype=float)
+        p_zList2 = np.zeros([len(pLists2),len(pLists2)*5],dtype=float)
+        for i in range(len(pLists2)):
+            j = 0
+            for arr in self.pLists2[i]:
+                p_xList2[i,j] = (float(arr[0]))
+                p_yList2[i, j] = (float(arr[1]))
+                p_zList2[i,j] = (float(arr[2]))
+                j+= 1
+        return p_xList2, p_yList2, p_zList2
