@@ -110,7 +110,6 @@ class GaitFinder:
 
     #get a list of split points that make up the steps to be analyzed
     def dataCutter(self, splits, data, dt, duration):
-        print(duration)
         t = 0
         finalSplitIndex = 0
         for i in range(len(splits) - 1):
