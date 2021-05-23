@@ -9,7 +9,6 @@ import calculations as calc
 import matplotlib.pyplot as plt
 from matplotlib.widgets import LassoSelector
 from mpl_toolkits.mplot3d import axes3d
-import statistics as stat                   #temporärt i GUI
 import csv
 import stepData
 import threading
@@ -48,15 +47,17 @@ class GUI:
         self.heightText1 = tk.StringVar(window)
         self.heightText2 = tk.StringVar(window)
         self.lengthText = tk.StringVar(window)
+        self.sideVarText = tk.StringVar(window)
         self.stepsLabel = tk.Label(window, textvariable=self.stepsText, font=("Arial", 11)).place(x=35,y=150)
         self.frequencyLabel = tk.Label(window,textvariable=self.frequencyText,font=("Arial", 11)).place(x=35,y=170)
         self.heightLabel1 = tk.Label(window,textvariable=self.heightText1,font=("Arial", 11)).place(x=35,y=230)
         self.heightLabel2 = tk.Label(window,textvariable=self.heightText2,font=("Arial", 11)).place(x=35,y=250)
         self.lengthLabel = tk.Label(window,textvariable=self.lengthText,font=("Arial", 11)).place(x=35,y=310)
+        self.sideVarLabel = tk.Label(window, textvariable=self.sideVarText, font=("Arial", 11)).place(x=35,y=370)
         tk.Label(text="Stegfrekvens:",font=("Arial", 15)).place(x=30, y=120)        
         tk.Label(text="Steghöjd:",font=("Arial", 15)).place(x=30, y=200)
         tk.Label(text="Steglängd:",font=("Arial", 15)).place(x=30, y=280)
-        #tk.Label(text="Sidostegsvariation:",font=("Arial", 15)).place(x = 30, y = 340)
+        tk.Label(text="Sidostegsvariation:",font=("Arial", 15)).place(x = 30, y = 340)
         tk.Label(text="Se grafer:",font=("Arial", 15)).place(x=30, y=400)
         #---------------------------------------------------
 
@@ -102,14 +103,18 @@ class GUI:
         self.min_height = 0
         self.step_length = 0
         self.stdv_length = 0
+        self.step_side = 0
+        self.stdv_side = 0
         self.timeStop = 0
         self.gaitNumber.set(0)
         self.t1String.set('')
         self.t2String.set('')
         self.comment.set('')
-        self.updateValues(self.total_steps,self.step_frequency,self.stdv_steps,self.step_height,self.stdv_height,self.max_height,self.min_height,self.step_length,self.stdv_length)
+        self.updateValues(self.total_steps,self.step_frequency,self.stdv_steps,self.step_height,self.stdv_height,
+                          self.max_height,self.min_height,self.step_length,self.stdv_length, self.step_side, self.stdv_side)
 
-    def updateValues(self, total_steps, step_frequency, stdv_steps, step_height, stdv_height, max_height, min_height, step_length, stdv_length):
+    def updateValues(self, total_steps, step_frequency, stdv_steps, step_height, stdv_height, max_height, min_height, 
+                     step_length, stdv_length, step_side, stdv_side):
         stp_fq = round(self.step_frequency,4)
         stdv_stp = round(self.stdv_steps,5)
         stp_he = round(self.step_height,4)
@@ -118,12 +123,15 @@ class GUI:
         min_he = round(self.min_height,4)
         stp_le = round(self.step_length, 4)
         stdv_le = round(self.stdv_length,5)
+        stp_var = round(self.step_side, 4)
+        stdv_var = round(self.stdv_side, 5)
         self.stepsText.set('Antal steg ' + f"{str(total_steps):<5}")
-        self.frequencyText.set('Medel '+ f"{str(stp_fq)+ ' Hz':<18}" +'  Stdv ' + f"{str(stdv_stp)+ ' Hz':<18}")
-        self.heightText1.set('Medelhöjd ' + f"{str(stp_he) + ' m':<18}"+ '  Stdv ' + f"{str(stdv_he)+ ' m':<18}")
-        self.heightText2.set('Maxhöjd   '+ f"{str(max_he)+ ' m':<18}" + '   Minhöjd ' + f"{str(min_he)+ ' m':<18}")
-        self.lengthText.set('Medellängd ' + f"{str(stp_le)+ ' m':<18}" + '  Stdv ' + f"{str(stdv_le)+ ' m':<18}") 
-
+        self.frequencyText.set('Medel '+ f"{str(stp_fq)+ ' Hz':<21}" +' Stdv ' + f"{str(stdv_stp)+ ' Hz':<12}")
+        self.heightText1.set('Medelhöjd ' + f"{str(stp_he) + ' m':<15}"+ ' Stdv ' + f"{str(stdv_he)+ ' m':<12}")
+        self.heightText2.set('Maxhöjd    '+ f"{str(max_he)+ ' m':<15}" + ' Minhöjd ' + f"{str(min_he)+ ' m':<12}")
+        self.lengthText.set('Medellängd ' + f"{str(stp_le)+ ' m':<13}" + ' Stdv ' + f"{str(stdv_le)+ ' m':<12}")
+        self.sideVarText.set('Medelvariation ' + f"{str(stp_var)+ ' m':<9}" + ' Stdv ' + f"{str(stdv_var)+ ' m':12}")
+        
     def enterData(self):
         def importing():
             try:
@@ -145,6 +153,7 @@ class GUI:
                 self.betsel_btn['state'] = 'normal'
                 self.makecalc_btn['state']= 'normal'
 
+        plt.close('all')
         self.fileimp_btn['state'] ='disabled'
         self.betsel_btn['state'] = 'disabled'
         self.makecalc_btn['state']= 'disabled'
@@ -209,7 +218,8 @@ class GUI:
                         self.indexStart = int(self.betArr[0][0])
                         self.indexStop = int(self.betArr[1][0])
                         if len(self.betArr) > 2:
-                            messagebox.showinfo("Notification", "Mer än en betingelse detekterades! \nBeräknar på första. Om osäker på vilken det är,\nvänligen välj ny betingelse.")
+                            messagebox.showinfo("Notification", "Mer än en betingelse detekterades!" +
+                            + "\nBeräknar på första. Om osäker på vilken det är,\nvänligen välj ny betingelse.")
                         self.t1String.set(cutTime[0])
                         self.t2String.set(cutTime[(len(cutTime)-1)])
                         self.min_t_val = float(self.t1String.get())
@@ -236,9 +246,11 @@ class GUI:
                 self.duration = self.timeStop - self.timeStart
                 self.calculations.setDt(self.calculations.dataArrays.dataTime, self.dataArrays.dataArray)
                 self.calculations.getGaits(self.duration)
-                (self.total_steps, self.step_frequency, self.stdv_steps, self.step_height, self.stdv_height, self.max_height, self.min_height, 
-                 self.step_length, self.stdv_length, self.xList, self.yList, self.zList )= self.calculations.newMeasurements()
+                (self.total_steps, self.step_frequency, self.stdv_steps, self.step_height, self.stdv_height, 
+                 self.max_height, self.min_height, self.step_length, self.stdv_length, self.step_side, 
+                 self.stdv_side, self.xList, self.yList, self.zList )= self.calculations.newMeasurements()
                 self.togglePlotButtons('normal')
+                self.gaitNumber.set(0)
             elif(self.timeStart<self.min_t_val and self.max_t_val>0 ):
                 messagebox.showinfo("Notification", "Starttiden kan inte vara mindre \nän "+ str(self.min_t_val)+ "!")
             elif(self.timeStop>self.max_t_val and self.max_t_val>0 ):
@@ -247,72 +259,81 @@ class GUI:
                 messagebox.showinfo("Notification", "Ingen data är tillgänglig! \nVänligen kontrollera att filer är \nimporterade och betingelse är vald.")
         except:
             messagebox.showinfo("Notification", "Fönstrena tar bara emot siffror! \nKontrollera att inget tecken kom med och försök igen.")
-            self.updateValues(self.total_steps, self.step_frequency, self.stdv_steps, self.step_height, self.stdv_height,self.max_height,
-                          self.min_height,self.step_length,self.stdv_length)
+        finally:
+            self.updateValues(self.total_steps, self.step_frequency, self.stdv_steps, self.step_height, self.stdv_height,
+                              self.max_height,self.min_height,self.step_length,self.stdv_length, self.step_side, self.stdv_side)
             plt.show()    #Temporärt för att kolla att beräkningar sker korrekt
 
-    def plot2d(self):   #Not yet done
-        #try:
-            num = self.gaitNumber.get()
-            if( num < 1 or num > len(self.xList)):
-                num = 1
-            self.gaitNumber.set(num)
-            self.twofig, self.twoax = plt.subplots()
-            cutIndex = np.asarray(self.xList[num-1] == 0,).nonzero()
-            self.twoax.plot(self.xList[num-1,0:cutIndex[0][1]],self.yList[num-1,0:cutIndex[0][1]])
+    def plot2d(self):   
+        try:
+            nr = self.gaitNumber.get()
+            if( nr < 1 or nr > len(self.xList)):
+                nr = 1
+            self.gaitNumber.set(nr)
+            self.twofig, self.twoax = plt.subplots(num=2)
+            cutIndex = np.asarray(self.xList[nr-1] == 0).nonzero()
+            self.twoax = plt.plot(self.xList[nr-1,0:cutIndex[0][1]],self.yList[nr-1,0:cutIndex[0][1]])
             plt.title('Steglängd och höjd')
             plt.show()
-        #except:
-            #messagebox.showerror("Notification", "Fel uppstod! \nHar data beräknats?")
+        except:
+            messagebox.showerror("Notification", "Fel uppstod! \nHar data beräknats?")
 
-    def plot3d(self):   #Not yet done
-        #try:
-            num = self.gaitNumber.get()
-            if( num < 1 or num > len(self.xList)):
-                num = 1
-            self.gaitNumber.set(num)
-            self.threefig, self.threeax = plt.subplots()
-            cutIndex = np.asarray(self.xList[num-1] == 0,).nonzero()
+    def plot3d(self):  
+        try:
+            nr = self.gaitNumber.get()
+            if( nr < 1 or nr > len(self.xList)):
+                nr = 1
+            self.gaitNumber.set(nr)
+            self.threefig, self.threeax = plt.subplots(num=3)
+            cutIndex = np.asarray(self.xList[nr-1] == 0).nonzero()
             self.threeax = plt.axes(projection='3d')
-            self.threeax.scatter3D(self.xList[num-1,0:cutIndex[0][1]],self.zList[num-1,0:cutIndex[0][1]],self.yList[num-1,0:cutIndex[0][1]]);   
-            plt.title('Gait movement')
+            self.threeax.scatter3D(self.xList[nr-1,0:cutIndex[0][1]],self.zList[nr-1,0:cutIndex[0][1]],self.yList[nr-1,0:cutIndex[0][1]]);   
+            plt.title('Gångcykel')
             plt.show()
-        #except:
-            #messagebox.showerror("Notification", "Fel uppstod! \nHar data beräknats?")
+        except:
+            messagebox.showerror("Notification", "Fel uppstod! \nHar data beräknats?")
 
     def plotPrevious(self):
-        if( self.gaitNumber.get() > 1): 
-            self.gaitNumber.set(self.gaitNumber.get()-1)
+        try:
+            if( self.gaitNumber.get() > 1): 
+                self.gaitNumber.set(self.gaitNumber.get()-1)
+        except:
+            messagebox.showwarning("Notification", "Endast heltal får stå i rutan!")
+        else:
             self.plotentry('<Return>')
 
     def plotNext(self):
         try:
             if( self.gaitNumber.get() < len(self.xList)):
-                print(len(self.xList))
                 self.gaitNumber.set(self.gaitNumber.get()+1)
-                self.plotentry('<Return>')
         except:
             messagebox.showwarning("Notification", "Endast heltal får stå i rutan!")
-
+        else:
+            self.plotentry('<Return>')
+            
     def plotentry(self, event):
         #try:
             if(self.gaitNumber.get()> 0 and self.gaitNumber.get() <= len(self.xList)):
-                num = self.gaitNumber.get()
-                self.gaitNumber.set(num)
+                nr = self.gaitNumber.get()
+                self.gaitNumber.set(nr)
                 #----Plotting current gaitnr--- not yet done
-                print(num)
-                self.twofig.clf()
-                self.threefig.clf()
-                cutIndex = np.asarray(self.xList[num-1] == 0,).nonzero()
-                self.twoax.plot(self.xList[num-1,0:cutIndex[0][1]],self.yList[num-1,0:cutIndex[0][1]])
-                self.threeax.scatter3D(self.xList[num-1,0:cutIndex[0][1]],self.zList[num-1,0:cutIndex[0][1]],self.yList[num-1,0:cutIndex[0][1]]);
-                self.twofig.draw()
-                self.threefig.draw()
+                cutIndex = np.asarray(self.xList[nr-1] == 0).nonzero()
+                openfigs = plt.get_fignums()
+                if openfigs == []:
+                    messagebox.showwarning("notification", "Öppna graf genom att klicka på ""2D"" eller ""3D""\nför att se skillnad!")
+                else:
+                    if openfigs[0] == 2 or len(openfigs) == 2: 
+                        self.twofig.clf()
+                        self.twoax = plt.plot(self.xList[nr-1,0:cutIndex[0][1]],self.yList[nr-1,0:cutIndex[0][1]])
+                        plt.title('Steglängd och höjd')
+                        plt.draw()
+                    if openfigs[0] == 3 or len(openfigs) == 2:
+                        self.threefig.clf()
+                        self.threeax.scatter3D(self.xList[nr-1,0:cutIndex[0][1]],self.zList[nr-1,0:cutIndex[0][1]],self.yList[nr-1,0:cutIndex[0][1]]);
+                        plt.draw()
                 #------------------------------
             elif(self.gaitNumber.get()<1 or self.gaitNumber.get()>len(self.xList)):
                 messagebox.showwarning("Notification", "Steget du kollar på måste vara mellan \n1 och "+ str(len(self.xList))+"!")
-            else:
-                messagebox.showwarning("notification", "Öppna graf genom att klicka på ""2D"" eller ""3D""\nför att se skillnad!")
         #except:
             #messagebox.showwarning("Notification", "Tar bara emot heltal!")
 
@@ -361,7 +382,3 @@ class GUI:
         except:
             self.save_filename = ''
             messagebox.showwarning("Notification", "Saknas tillräckligt med information! \nHar beräkning genomförts?")
-
-#window = tk.Tk()
-#GUI(window)
-#window.mainloop()

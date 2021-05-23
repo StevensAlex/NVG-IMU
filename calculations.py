@@ -121,13 +121,17 @@ class Calculations():
         zArr = -zArr
         height = []
         length = []
+        sidestp = []
         for i in range(len(xArr)):
             height.append(np.amax(yArr[i]))
             length.append(np.amax(xArr[i]))
+            sidestp.append(stat.mean(zArr[i]))
         mheight = stat.mean(height)
         hghtStdev = stat.stdev(height)
         hghtMax = np.amax(height)
         hghtMin = np.amin(height)
         mlength = stat.mean(length)
         lenStdev = stat.stdev(length)
-        return steps, stepFq, fqStdev, mheight, hghtStdev, hghtMax, hghtMin, mlength, lenStdev, xArr, yArr, zArr
+        mSide = stat.mean(sidestp)
+        sideStdev = stat.stdev(sidestp)
+        return steps, stepFq, fqStdev, mheight, hghtStdev, hghtMax, hghtMin, mlength, lenStdev, mSide, sideStdev, xArr, yArr, zArr
