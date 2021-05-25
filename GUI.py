@@ -57,7 +57,7 @@ class GUI:
         tk.Label(text="Stegfrekvens:",font=("Arial", 15)).place(x=30, y=120)        
         tk.Label(text="Steghöjd:",font=("Arial", 15)).place(x=30, y=200)
         tk.Label(text="Steglängd:",font=("Arial", 15)).place(x=30, y=280)
-        tk.Label(text="Sidostegsvariation:",font=("Arial", 15)).place(x = 30, y = 340)
+        tk.Label(text="Stegets sidledsvariation:",font=("Arial", 15)).place(x = 30, y = 340)
         tk.Label(text="Se grafer:",font=("Arial", 15)).place(x=30, y=400)
         #---------------------------------------------------
 
@@ -242,6 +242,7 @@ class GUI:
             elif(self.timeStop - self.timeStart < 30 ):
                 messagebox.showinfo("Notification", "Intervallet är för kort! \nMåste vara större än 30 sekunder!")
             elif(self.timeStop>self.timeStart and self.timeStart>=self.min_t_val and self.timeStop<=self.max_t_val):
+                plt.close('all')
                 self.calculations.setDataArray(self.timeStart,self.timeStop, self.indexStart,self.indexStop)
                 self.duration = self.timeStop - self.timeStart
                 self.calculations.setDt(self.calculations.dataArrays.dataTime, self.dataArrays.dataArray)
@@ -273,25 +274,28 @@ class GUI:
             self.twofig, self.twoax = plt.subplots(num=2)
             cutIndex = np.asarray(self.xList[nr-1] == 0).nonzero()
             self.twoax = plt.plot(self.xList[nr-1,0:cutIndex[0][1]],self.yList[nr-1,0:cutIndex[0][1]])
+            plt.label(xlabel='Längd [m]', ylabel='Höjd [m]')
             plt.title('Steglängd och höjd')
             plt.show()
         except:
             messagebox.showerror("Notification", "Fel uppstod! \nHar data beräknats?")
 
     def plot3d(self):  
-        try:
+        #try:
             nr = self.gaitNumber.get()
             if( nr < 1 or nr > len(self.xList)):
                 nr = 1
             self.gaitNumber.set(nr)
-            self.threefig, self.threeax = plt.subplots(num=3)
+            #self.threefig, self.threeax = plt.subplots(num=3)
+            self.threeax = plt.figure(num=3).add_subplot(projection='3d')
             cutIndex = np.asarray(self.xList[nr-1] == 0).nonzero()
             self.threeax = plt.axes(projection='3d')
-            self.threeax.scatter3D(self.xList[nr-1,0:cutIndex[0][1]],self.zList[nr-1,0:cutIndex[0][1]],self.yList[nr-1,0:cutIndex[0][1]]);   
+            self.threeax.plot3D(self.xList[nr-1,0:cutIndex[0][1]],self.zList[nr-1,0:cutIndex[0][1]],self.yList[nr-1,0:cutIndex[0][1]]);
+            self.threeax.set(xlabel='Längd [m]',ylabel='Sidleds [m]',zlabel='Höjd [m]')
             plt.title('Gångcykel')
             plt.show()
-        except:
-            messagebox.showerror("Notification", "Fel uppstod! \nHar data beräknats?")
+        #except:
+            #messagebox.showerror("Notification", "Fel uppstod! \nHar data beräknats?")
 
     def plotPrevious(self):
         try:
@@ -325,12 +329,15 @@ class GUI:
                     if openfigs[0] == 2 or len(openfigs) == 2: 
                         self.twofig.clf()
                         self.twoax = plt.plot(self.xList[nr-1,0:cutIndex[0][1]],self.yList[nr-1,0:cutIndex[0][1]])
+                        plt.label(xlabel='Längd [m]', ylabel='Höjd [m]')
                         plt.title('Steglängd och höjd')
-                        plt.draw()
+                        self.twofig.canvas.draw_idle()
                     if openfigs[0] == 3 or len(openfigs) == 2:
-                        self.threefig.clf()
-                        self.threeax.scatter3D(self.xList[nr-1,0:cutIndex[0][1]],self.zList[nr-1,0:cutIndex[0][1]],self.yList[nr-1,0:cutIndex[0][1]]);
-                        plt.draw()
+                        self.threeax.cla()
+                        self.threeax.plot3D(self.xList[nr-1,0:cutIndex[0][1]],self.zList[nr-1,0:cutIndex[0][1]],self.yList[nr-1,0:cutIndex[0][1]]);
+                        self.threeax.set(xlabel='Längd [m]',ylabel='Sidled [m]',zlabel='Höjd [m]')
+                        plt.title('Gångcykel')
+                        plt.show()
                 #------------------------------
             elif(self.gaitNumber.get()<1 or self.gaitNumber.get()>len(self.xList)):
                 messagebox.showwarning("Notification", "Steget du kollar på måste vara mellan \n1 och "+ str(len(self.xList))+"!")

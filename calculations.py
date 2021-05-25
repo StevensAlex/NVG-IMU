@@ -45,10 +45,11 @@ class Calculations():
 
     def betDetection(self, startIndex, stopIndex):
         dataArray = self.dataArrays.getArray("dataArray")
+        #Find data points that have higher acc-data
         def getPoints(dataArray, RMS):
             packets = []
-            points = dataArray[startIndex:stopIndex,0][np.nonzero(dataArray[startIndex:stopIndex,5] > 2.4*RMS)]             #Assign acc(Y)Value > 2.4xRMS to corrresponding packet
-            for i in range (1,points.size):                                                                                 #Assign packets that lies withing sf/2,
+            points = dataArray[startIndex:stopIndex,0][np.nonzero(dataArray[startIndex:stopIndex,5] > 2.4*RMS)]             
+            for i in range (1,points.size):                                                                                 
                 if points[i]-points[i-1] < sampleFrekvens/2:
                     packets.append(points[i])
             return packets
@@ -63,7 +64,8 @@ class Calculations():
         RMS = math.sqrt(Square/len(dataArray))
 
         packets = getPoints(dataArray, RMS)
-        for i in range(1, len(packets)-1):                                      #Remove nearby packets and remain with farends of "packet-group"
+        #Remove nearby packets and remain with farends of "packet-group"
+        for i in range(1, len(packets)-1):           
             if( i == 1 and (packets[i] - packets[i-1] < aproxSekvensTime*sampleFrekvens*50)):
                 dataSelection.append(packets[0])
             elif( packets[i] - packets[i-1] > aproxSekvensTime*sampleFrekvens*20):
@@ -72,7 +74,7 @@ class Calculations():
                 dataSelection.append(packets[i])
             elif( i == (len(packets)-2) and (packets[i+1] - packets[i] < aproxSekvensTime*sampleFrekvens*50)):
                 dataSelection.append(packets[i+1])
-
+        #Remove farends that lies too close, disturbances etc
         betData = []
         if(len(dataSelection)%2 == 0 and len(dataSelection) >= 2):
             if (len(dataSelection) == 2):
@@ -100,7 +102,8 @@ class Calculations():
         pointsInInterval = T[np.nonzero(cutXArr > 0.4*stat.mean(cutXArr))]              #(experimental "top" value)
         fqArray.append(pointsInInterval[0])
         for i in range(1, len(pointsInInterval)):
-            if ( (pointsInInterval[i] - (pointsInInterval[0]+(stopSek-startSek)) < ((pointsInInterval[0]+(stopSek-startSek))-fqArray[len(fqArray)-1])) and (pointsInInterval[i]-fqArray[len(fqArray)-1]) > 0.61):   #(experimental time value)
+            if ( (pointsInInterval[i] - (pointsInInterval[0]+(stopSek-startSek)) < ((pointsInInterval[0]+(stopSek-startSek))-fqArray[len(fqArray)-1]))
+               and (pointsInInterval[i]-fqArray[len(fqArray)-1]) > 0.61):   #(experimental time value)
                 fqArray.append(pointsInInterval[i])
                 if (len(fqArray) >= 2):
                     stpFreq.append(1/(pointsInInterval[i]-fqArray[len(fqArray)-2]))       #Converted to Hz (step/second)
@@ -116,9 +119,9 @@ class Calculations():
         fqStdev = stat.stdev(self.gf.fqs)
         stepTemp = stepData.StepData(self.gf.steps, self.dt)
         xArr, yArr, zArr = stepTemp.getPositionalArrays(stepTemp.pLists2)
-        xArr = -xArr                                        #Since the data seems to be negative rather than positive
+        xArr = -xArr                    #Since the data seems to be negative rather than positive for x and y
         yArr = -yArr
-        zArr = -zArr
+        zArr = zArr
         height = []
         length = []
         sidestp = []
@@ -134,4 +137,5 @@ class Calculations():
         lenStdev = stat.stdev(length)
         mSide = stat.mean(sidestp)
         sideStdev = stat.stdev(sidestp)
-        return steps, stepFq, fqStdev, mheight, hghtStdev, hghtMax, hghtMin, mlength, lenStdev, mSide, sideStdev, xArr, yArr, zArr
+        return (steps, stepFq, fqStdev, mheight, hghtStdev, hghtMax, 
+                hghtMin, mlength, lenStdev, mSide, sideStdev, xArr, yArr, zArr)

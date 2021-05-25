@@ -60,6 +60,9 @@ class StepData:
         plt.title("foot movement")
         plt.legend()
         #=======test======
+        #plt.figure()
+        #plt.plot(self.stepsRaw[:][:,0], self.stepsRaw[:][:,5])
+        #plt.title("test")
         #=======test======
         print('pre next integrator')
         self.pLists2 = self.fbIntegrator(self.labAcc)
@@ -104,12 +107,12 @@ class StepData:
             thetaList.append(stepAngles[i][0])
             phiList.append(stepAngles[i][1])
             psiList.append(stepAngles[i][2])
-        step = self.stepsRaw[0]
-        plt.figure()
-        plt.plot(step[:,0], thetaList, label = 'theta')
-        plt.plot(step[:,0], phiList, label = 'phi')
-        plt.plot(step[:,0], psiList, label = 'psi')
-        plt.legend()
+        #step = self.stepsRaw[0]
+        #plt.figure()
+        #plt.plot(step[:,0], thetaList, label = 'theta')
+        #plt.plot(step[:,0], phiList, label = 'phi')
+        #plt.plot(step[:,0], psiList, label = 'psi')
+        #plt.legend()
 
 
 
@@ -133,7 +136,7 @@ class StepData:
             R_e = np.array([[math.cos(phi)*math.cos(psi)+math.sin(phi)*math.sin(theta)*math.sin(psi),-math.cos(phi)*math.sin(psi)+math.sin(phi)*math.sin(theta)*math.cos(psi), math.sin(phi)*math.cos(theta)],
                             [math.cos(theta)*math.sin(psi),math.cos(theta)*math.cos(psi),-math.sin(theta)],
                             [-math.sin(phi)*math.cos(psi)+math.cos(phi)*math.sin(theta)*math.sin(psi),math.sin(phi)*math.sin(psi)+math.cos(phi)*math.sin(theta)*math.cos(psi),math.cos(phi)*math.cos(theta)]])
-            a_e = np.dot(R_se, a_s) - np.array([[9.82],[0],[0]])
+            a_e = np.dot(R_se, a_s) - np.array([[0],[9.82],[0]])
             #compX = float(a_e[0])
             #compY = float(a_e[1])
             #compZ = float(a_e[2])
@@ -159,7 +162,7 @@ class StepData:
                 R_e = np.array([[math.cos(phi)*math.cos(psi)+math.sin(phi)*math.sin(theta)*math.sin(psi),-math.cos(phi)*math.sin(psi)+math.sin(phi)*math.sin(theta)*math.cos(psi), math.sin(phi)*math.cos(theta)],
                             [math.cos(theta)*math.sin(psi),math.cos(theta)*math.cos(psi),-math.sin(theta)],
                             [-math.sin(phi)*math.cos(psi)+math.cos(phi)*math.sin(theta)*math.sin(psi),math.sin(phi)*math.sin(psi)+math.cos(phi)*math.sin(theta)*math.cos(psi),math.cos(phi)*math.cos(theta)]])
-                a_e = np.dot(R_se, a_s) - np.array([[9.82],[0],[0]])
+                a_e = np.dot(R_se, a_s) - np.array([[0],[9.82],[0]])
                 a_eList.append(a_e)
             for i in range(len(a_eList)):
                 step[i,4] = a_eList[i][0]
