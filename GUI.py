@@ -143,9 +143,9 @@ class GUI:
                 self.loading_text.set(str(data_name[len(data_name)-1]) +' laddat!')
                 self.loading_label.place(x=42,y=47)
                 self.resetWindow()
-                messagebox.showinfo("Notification","Datat har laddat färdigt!")
+                messagebox.showinfo("Notification","Datan har laddat färdigt!")
             except:
-                messagebox.showerror("Notification","Datat kunde inte laddas! \nFörsök igen!")
+                messagebox.showerror("Notification","Datan kunde inte laddas! \nFörsök igen!")
             finally:
                 self.progress.stop()
                 self.progress.place_forget()
@@ -248,8 +248,8 @@ class GUI:
                 self.calculations.setDt(self.calculations.dataArrays.dataTime, self.dataArrays.dataArray)
                 self.calculations.getGaits(self.duration)
                 (self.total_steps, self.step_frequency, self.stdv_steps, self.step_height, self.stdv_height, 
-                 self.max_height, self.min_height, self.step_length, self.stdv_length, self.step_side, 
-                 self.stdv_side, self.xList, self.yList, self.zList )= self.calculations.newMeasurements()
+                    self.max_height, self.min_height, self.step_length, self.stdv_length, self.step_side, 
+                    self.stdv_side, self.xList, self.yList, self.zList )= self.calculations.newMeasurements()
                 self.togglePlotButtons('normal')
                 self.gaitNumber.set(0)
             elif(self.timeStart<self.min_t_val and self.max_t_val>0 ):
