@@ -9,60 +9,12 @@ class StepData:
         print('raw:', len(stepsRaw))
         print('raw:', len(stepsRaw[0]))
         self.dt = dt
-        self.labAcc, eu = self.angleTransformation(self.stepsRaw)
-        print('lab:', len(self.labAcc))
-        print('lab:', len(self.labAcc[0]))
-        preComp = self.driftComp(self.stepsRaw)
-        print('now=====================================================')
-        labPostComp, eulerActual = self.angleTransformation(preComp)
-        print('done====================================================')
-        labComp = self.driftComp(self.labAcc)
-        print('labcomp:',len(labComp))
-        print('labcomp:',len(labComp[0]))
-        print('labcomp:',len(labComp[0][0]))
-        #plt.figure()
-        #step = labComp[0]
-        ##xaccList=[]
-        ##yaccList=[]
-        ##zaccList=[]
-        ##for point in step:
-        ##    xaccList.append(point[0])
-        ##    yaccList.append(point[1])
-        ##    zaccList.append(point[2])
-        #plt.plot(step[:,0], step[:,4], label='x')
-        #print('asdasdasd')
-        #plt.plot(labComp[0][:,0], labComp[0][:,5], label='y')
-        #print('asd')
-        #plt.plot(labComp[0][:,0], labComp[0][:,6], label='z')
-        #plt.title('lab comp')
-
-        self.pLists = self.integrator(self.labAcc)
-        print('pLists:', len(self.pLists))
-        print('pLists:', len(self.pLists[0]))
-        print('pLists:', len(self.pLists[0][0]))
-
-        #=======test======
-        p_xList = []
-        p_yList = []
-        p_zList = []
-        print('pre-plot')
-        for arr in self.pLists[0]:
-            p_xList.append(float(arr[0]))
-            p_yList.append(float(arr[1]))
-            p_zList.append(float(arr[2]))
-        print('plot time')
-        print(p_xList)
-        plt.figure()
-        plt.plot(self.stepsRaw[0][:,0], p_xList, label='x')
-        print('1 plot')
-        plt.plot(self.stepsRaw[0][:,0], p_yList, label='y')
-        plt.plot(self.stepsRaw[0][:,0], p_zList, label='z')
-        plt.title("foot movement")
-        plt.legend()
-        #=======test======
-        #=======test======
+        self.sensComp = self.driftComp(self.stepsRaw)
+        self.labAcc, eu = self.angleTransformation(self.sensComp)
+        
         print('pre next integrator')
         self.pLists2 = self.fbIntegrator(self.labAcc)
+        self.pLists2 = self.pComp(self.pLists2)
         print('post next integrator')
         print('pList:', len(self.pLists2))
         print('pList:', len(self.pLists2[0]))
@@ -77,45 +29,44 @@ class StepData:
             p_yList2.append(float(arr[1]))
             p_zList2.append(float(arr[2]))
         print('plot time')
+        print(len(self.stepsRaw[0][:,0]))
+        print(len(p_xList2))
         plt.figure()
         plt.plot(self.stepsRaw[0][:,0], p_xList2, label='x')
         plt.plot(self.stepsRaw[0][:,0], p_yList2, label='y')
         plt.plot(self.stepsRaw[0][:,0], p_zList2, label='z')
         plt.title("foot movement fb integrator")
         plt.legend()
-        plt.figure()
-        plt.plot(self.stepsRaw[0][:,0], self.stepsRaw[0][:,1], label='x')
-        plt.plot(self.stepsRaw[0][:,0], self.stepsRaw[0][:,2], label='y')
-        plt.plot(self.stepsRaw[0][:,0], self.stepsRaw[0][:,3], label='z')
-        plt.title('ang. vel')
-        plt.legend()
+        print('plotted')
         #=======test======
-        stepAngles = eulerActual[0]
-        #print(eulerActual)
-        print('eulerlists:', len(eulerActual))
-        print('stepAngles:', len(stepAngles))
-        print('stepAngles content:', len(stepAngles[0]))
-        print('stepAngles content inner:', len(stepAngles[0][0]))
-        thetaList = []
-        phiList = []
-        psiList = []
-        print('points')
-        for i in range(len(stepAngles)):
-            thetaList.append(stepAngles[i][0])
-            phiList.append(stepAngles[i][1])
-            psiList.append(stepAngles[i][2])
-        step = self.stepsRaw[0]
-        plt.figure()
-        plt.plot(step[:,0], thetaList, label = 'theta')
-        plt.plot(step[:,0], phiList, label = 'phi')
-        plt.plot(step[:,0], psiList, label = 'psi')
-        plt.legend()
+        
 
+    def pComp(self, pLists):
+        for pList in pLists:
+            print('hey')
+            if float(pList[0][1]) < float(pList[-1][1]):
+                diff = float(pList[-1][1]) - float(pList[0][1])
+                print('d',diff)
+                compVal = diff/len(pList)
+                print(compVal)
+                for i in range(len(pList)):
+                    pList[i][1] = float(pList[i][1]) - (compVal*i)
+            if float(pList[0][1]) > float(pList[-1][1]):
+                diff = float(pList[0][1]) - float(pList[-1][1])
+                print('di', diff)
+                compVal = diff/len(pList)
+                print(compVal)
+                for i in range(len(pList)):
+                    pList[i][1] = float(pList[i][1]) + (compVal*i)
+                    
+        print('returning')
+        return pLists
 
 
     def angleTransformation(self, steps):
         stepAccLists = []
         eulerLists = []
+        a_eLists = []
         for j in range(len(steps)):
             step = steps[j]
             ax = (step[0, 4] *9.82)
@@ -133,23 +84,17 @@ class StepData:
             R_e = np.array([[math.cos(phi)*math.cos(psi)+math.sin(phi)*math.sin(theta)*math.sin(psi),-math.cos(phi)*math.sin(psi)+math.sin(phi)*math.sin(theta)*math.cos(psi), math.sin(phi)*math.cos(theta)],
                             [math.cos(theta)*math.sin(psi),math.cos(theta)*math.cos(psi),-math.sin(theta)],
                             [-math.sin(phi)*math.cos(psi)+math.cos(phi)*math.sin(theta)*math.sin(psi),math.sin(phi)*math.sin(psi)+math.cos(phi)*math.sin(theta)*math.cos(psi),math.cos(phi)*math.cos(theta)]])
-            a_e = np.dot(R_se, a_s) - np.array([[9.82],[0],[0]])
-            #compX = float(a_e[0])
-            #compY = float(a_e[1])
-            #compZ = float(a_e[2])
-            #a_e = a_e - np.array([[compX],[0],[0]])
+            a_e = np.dot(R_se, a_s) - np.array([[0],[9.82],[0]])
             
             eulerList = [eulerVec]
             a_eList = [a_e]
             angVelList = [np.array([[math.radians(step[0, 1])],[math.radians(step[0, 2])],[math.radians(step[0, 3])]])]
             for i in range(1, len(step[:,0])):
-                a_s = np.array([[(step[i, 4] *9.82)],[(step[i, 5] *9.82)],[(step[i, 6] *9.82)]])
-                angVel = np.array([[math.radians(step[i, 1])],[math.radians(step[i, 2])],[math.radians(step[i, 3])]])
+                a_s = np.array([[float((step[i, 4]) *9.82)],[(float(step[i, 5]) *9.82)],[(float(step[i, 6]) *9.82)]])
+                angVel = np.array([[math.radians(float(step[i, 1]))],[math.radians(float(step[i, 2]))],[math.radians(float(step[i, 3]))]])
                 eulerVec += ((angVel + angVelList[-1])/2) * self.dt
                 angVelList.append(angVel)
                 eulerList.append(np.array([[eulerVec[0]],[eulerVec[1]],[eulerVec[2]]]))
-                if j == 0:
-                    print('euler:\n', eulerVec)
                 theta = eulerVec[0]
                 phi = eulerVec[1]
                 psi = eulerVec[2]
@@ -159,22 +104,12 @@ class StepData:
                 R_e = np.array([[math.cos(phi)*math.cos(psi)+math.sin(phi)*math.sin(theta)*math.sin(psi),-math.cos(phi)*math.sin(psi)+math.sin(phi)*math.sin(theta)*math.cos(psi), math.sin(phi)*math.cos(theta)],
                             [math.cos(theta)*math.sin(psi),math.cos(theta)*math.cos(psi),-math.sin(theta)],
                             [-math.sin(phi)*math.cos(psi)+math.cos(phi)*math.sin(theta)*math.sin(psi),math.sin(phi)*math.sin(psi)+math.cos(phi)*math.sin(theta)*math.cos(psi),math.cos(phi)*math.cos(theta)]])
-                a_e = np.dot(R_se, a_s) - np.array([[9.82],[0],[0]])
+                a_e = np.dot(R_se, a_s) - np.array([[0],[9.82],[0]])
                 a_eList.append(a_e)
-            for i in range(len(a_eList)):
-                step[i,4] = a_eList[i][0]
-                step[i,5] = a_eList[i][1]
-                step[i,6] = a_eList[i][2]
-            if j == 0:
-                print('list:', eulerList)
             eulerLists.append(eulerList)
-            #print('=====\n=====\n=====')
-            #print(eulerList)
-            #print('=====\n=====\n=====')
-        print('eulerLists[0]:',eulerLists[0])
-        return steps, eulerLists
-            #stepAccLists.append(a_eList)
-        #return stepAccLists
+            a_eLists.append(a_eList)
+        print('end angTran')
+        return a_eLists, eulerLists
 
 
     def driftComp(self, steps):
@@ -219,17 +154,20 @@ class StepData:
             pLists.append(pList)
         return pLists
 
-    def fbIntegrator(self, steps):
+    def fbIntegrator(self, a_eLists):
         pLists = []
         accLists = []
         print('plists 2 declared')
-        for step in steps:
-            acc = step[:,4:7]
-            accList = []
-            for a in acc:
-                accList.append(np.array([[a[0]], [a[1]], [a[2]]]))
-            accLists.append(accList)
-        for aList in accLists:
+        #for a_eList in a_eLists:
+        #    acc = a_eList
+        #    accList = []
+        #    for a in acc:
+        #        accList.append(np.array([[a[0]], [a[1]], [a[2]]]))
+        #    accLists.append(accList)
+        count = 0
+        for aList in a_eLists:
+            print(count)
+            count += 1
             v_ef = np.array([[0], [0], [0]])
             v_eb = np.array([[0], [0], [0]])
             vfList = [v_ef]
