@@ -63,18 +63,20 @@ class GUI:
 
         #-----  Area for plot buttons-------
         self.twod_btn = tk.Button(window, text="2D", bg='gray', fg='black', state='disabled', command=self.plot2d)
-        self.twod_btn.place(x=60, y=440)
+        self.twod_btn.place(x=35, y=440)
         self.threed_btn = tk.Button(window, text="3D", bg='gray', fg='black', state='disabled', command=self.plot3d)
-        self.threed_btn.place(x=160, y=440)
-
+        self.threed_btn.place(x=85, y=440)
+        self.clearVar = tk.IntVar()
+        self.toggleClear = tk.Checkbutton(window, text='Rita flera cykler', variable=self.clearVar, onvalue=1, offvalue=0)
+        self.toggleClear.place(x=115,y=440)
         self.prevplot_btn = tk.Button(window, text="-", fg='black', state='disabled', command=self.plotPrevious)
-        self.prevplot_btn.place(x=230,y=440)
+        self.prevplot_btn.place(x=240,y=440)
         self.gaitNumber = tk.IntVar(window)
         self.gaitDisplay = tk.Entry(window, textvariable=self.gaitNumber, state='disabled', width=4, font=("Arial", 11))
-        self.gaitDisplay.place(x=245, y=442)
+        self.gaitDisplay.place(x=255, y=442)
         self.gaitDisplay.bind('<Return>',self.plotentry)
         self.nxtplot_btn = tk.Button(window, text="+", fg='black', state='disabled', command=self.plotNext)
-        self.nxtplot_btn.place(x=275,y=440)
+        self.nxtplot_btn.place(x=285,y=440)
         #-----------------------------------
 
         #-----  Area for comment and save file ---------
@@ -164,6 +166,7 @@ class GUI:
 
     def enterBet(self):
         try:
+            plt.close('all')
             arrLA = self.dataArrays.getArray("dataArray")
             arrN = self.dataArrays.getArray("neckArray")
             self.fig, self.ax = plt.subplots()
@@ -274,19 +277,19 @@ class GUI:
             self.twofig, self.twoax = plt.subplots(num=2)
             cutIndex = np.asarray(self.xList[nr-1] == 0).nonzero()
             self.twoax = plt.plot(self.xList[nr-1,0:cutIndex[0][1]],self.yList[nr-1,0:cutIndex[0][1]])
-            plt.label(xlabel='Längd [m]', ylabel='Höjd [m]')
+            plt.ylabel('Höjd [m]')
+            plt.xlabel('Längd [m]')
             plt.title('Steglängd och höjd')
             plt.show()
         except:
             messagebox.showerror("Notification", "Fel uppstod! \nHar data beräknats?")
 
     def plot3d(self):  
-        #try:
+        try:
             nr = self.gaitNumber.get()
             if( nr < 1 or nr > len(self.xList)):
                 nr = 1
             self.gaitNumber.set(nr)
-            #self.threefig, self.threeax = plt.subplots(num=3)
             self.threeax = plt.figure(num=3).add_subplot(projection='3d')
             cutIndex = np.asarray(self.xList[nr-1] == 0).nonzero()
             self.threeax = plt.axes(projection='3d')
@@ -294,8 +297,8 @@ class GUI:
             self.threeax.set(xlabel='Längd [m]',ylabel='Sidleds [m]',zlabel='Höjd [m]')
             plt.title('Gångcykel')
             plt.show()
-        #except:
-            #messagebox.showerror("Notification", "Fel uppstod! \nHar data beräknats?")
+        except:
+            messagebox.showerror("Notification", "Fel uppstod! \nHar data beräknats?")
 
     def plotPrevious(self):
         try:
@@ -316,33 +319,35 @@ class GUI:
             self.plotentry('<Return>')
             
     def plotentry(self, event):
-        #try:
+        try:
             if(self.gaitNumber.get()> 0 and self.gaitNumber.get() <= len(self.xList)):
                 nr = self.gaitNumber.get()
                 self.gaitNumber.set(nr)
-                #----Plotting current gaitnr--- not yet done
                 cutIndex = np.asarray(self.xList[nr-1] == 0).nonzero()
                 openfigs = plt.get_fignums()
                 if openfigs == []:
                     messagebox.showwarning("notification", "Öppna graf genom att klicka på ""2D"" eller ""3D""\nför att se skillnad!")
                 else:
                     if openfigs[0] == 2 or len(openfigs) == 2: 
-                        self.twofig.clf()
+                        if( self.clearVar.get() == 0):
+                            self.twofig.clf()
                         self.twoax = plt.plot(self.xList[nr-1,0:cutIndex[0][1]],self.yList[nr-1,0:cutIndex[0][1]])
-                        plt.label(xlabel='Längd [m]', ylabel='Höjd [m]')
+                        plt.ylabel('Höjd [m]')
+                        plt.xlabel('Längd [m]')
                         plt.title('Steglängd och höjd')
                         self.twofig.canvas.draw_idle()
                     if openfigs[0] == 3 or len(openfigs) == 2:
-                        self.threeax.cla()
+                        if( self.clearVar.get() == 0):
+                            self.threeax.cla()
                         self.threeax.plot3D(self.xList[nr-1,0:cutIndex[0][1]],self.zList[nr-1,0:cutIndex[0][1]],self.yList[nr-1,0:cutIndex[0][1]]);
                         self.threeax.set(xlabel='Längd [m]',ylabel='Sidled [m]',zlabel='Höjd [m]')
                         plt.title('Gångcykel')
+                        
                         plt.show()
-                #------------------------------
             elif(self.gaitNumber.get()<1 or self.gaitNumber.get()>len(self.xList)):
                 messagebox.showwarning("Notification", "Steget du kollar på måste vara mellan \n1 och "+ str(len(self.xList))+"!")
-        #except:
-            #messagebox.showwarning("Notification", "Tar bara emot heltal!")
+        except:
+            messagebox.showwarning("Notification", "Tar bara emot heltal!")
 
     def togglePlotButtons(self, argument)-> None:
         if( argument == 'normal' or argument == 'disabled'):
