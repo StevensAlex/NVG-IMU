@@ -32,7 +32,8 @@ class DataArrays():
         }
         return switcher.get(argument, 0)
 
-    def timeConversion(self, argument, startSession, stopSession):  #Timeconversion from packets of selected arraylength starting at 0:
+    def timeConversion(self, argument, startSession, stopSession): 
+        #Timeconversion from packets of selected arraylength starting at 0:
         packetArr = self.getArray(argument)
         if (argument == "dataArray"): 
             timeArray = self.getArray("dataTime")
@@ -41,7 +42,7 @@ class DataArrays():
             timeArray = self.getArray("neckTime")
             register = self.getArray("neckRegister")
 
-        sampleFrekvens = self.getDataRate(register[69,2])                 #position in register for data rate acquisition
+        sampleFrekvens = self.getDataRate(register[69,2]) #position in register for data rate acquisition
         if (startSession <= 0):
             timeStart = timeArray[0, 4]*3600 + timeArray[0, 5]*60 + timeArray[0, 6]
         else:
@@ -49,7 +50,8 @@ class DataArrays():
                 if( timeArray[i,0] <= (packetArr[startSession,0] + sampleFrekvens)):
                     timeStart = timeArray[i, 4]*3600 + timeArray[i, 5]*60 + timeArray[i, 6]
         if (stopSession >= (len(packetArr)-1)):
-            timeStop = timeArray[(len(timeArray)-1), 4]*3600 + timeArray[(len(timeArray)-1), 5]*60 + timeArray[(len(timeArray)-1), 6]
+            timeStop = (timeArray[(len(timeArray)-1), 4]*3600 + 
+            timeArray[(len(timeArray)-1), 5]*60 + timeArray[(len(timeArray)-1), 6])
         else:
             for i in range(0, len(timeArray)):
                 if( timeArray[i,0] <= (packetArr[stopSession,0] + sampleFrekvens)):
@@ -81,7 +83,8 @@ class DataArrays():
 
     def getIndexFromTime(self, argument, time):
         packetArr = self.getArray(argument)
-        sessionTime =self.timeConversion("dataArray",0,(len(packetArr)))[(len(packetArr)-1)]        #Total trial time
+        #Take total trial time
+        sessionTime =self.timeConversion("dataArray",0,(len(packetArr)))[(len(packetArr)-1)]        
         if(time <= 0):
             time = 0
         if(time >= sessionTime):
