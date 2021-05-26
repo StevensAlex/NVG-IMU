@@ -195,7 +195,6 @@ class GUI:
         except:
             messagebox.showwarning("Notification", "Ingen fil är annu inläst!")
 
-
     def onSelect(self,xy):
         dtype = [('x', float), ('y', float)]
         points = np.array(xy, dtype=dtype)
@@ -266,7 +265,8 @@ class GUI:
         finally:
             self.updateValues(self.total_steps, self.step_frequency, self.stdv_steps, self.step_height, self.stdv_height,
                               self.max_height,self.min_height,self.step_length,self.stdv_length, self.step_side, self.stdv_side)
-            #plt.show()         Debugg
+            #plt.show()         #Debugg
+
     def plot2d(self):   
         try:
             nr = self.gaitNumber.get()
@@ -341,7 +341,6 @@ class GUI:
                         self.threeax.plot3D(self.xList[nr-1,0:cutIndex[0][1]],self.zList[nr-1,0:cutIndex[0][1]],self.yList[nr-1,0:cutIndex[0][1]]);
                         self.threeax.set(xlabel='Längd [m]',ylabel='Sidled [m]',zlabel='Höjd [m]')
                         plt.title('Gångcykel')
-                        
                         plt.show()
             elif(self.gaitNumber.get()<1 or self.gaitNumber.get()>len(self.xList)):
                 messagebox.showwarning("Notification", "Steget du kollar på måste vara mellan \n1 och "+ str(len(self.xList))+"!")
