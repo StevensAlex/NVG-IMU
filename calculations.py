@@ -92,6 +92,31 @@ class Calculations():
                 indexes.append(np.where(dataArray[:,0] == packet))
         return indexes
 
+    def stepFrequency(self):                        #Tills gaitfinder är helt pålitlig
+        fqArray = []
+        stpFreq = []
+        cutXArr = self.dataArr[:,4]
+        T = self.timeArr[:]
+        startSek = self.startTime
+        stopSek = self.stopTime
+        
+        pointsInInterval = T[np.nonzero(cutXArr > 0.4*stat.mean(cutXArr))]              #(experimental "top" value)
+        fqArray.append(pointsInInterval[0])
+        for i in range(1, len(pointsInInterval)):
+            if ( (pointsInInterval[i] - (pointsInInterval[0]+(stopSek-startSek)) < ((pointsInInterval[0]+(stopSek-startSek))-fqArray[len(fqArray)-1]))
+               and (pointsInInterval[i]-fqArray[len(fqArray)-1]) > 0.61):   #(experimental time value)
+                fqArray.append(pointsInInterval[i])
+                if (len(fqArray) >= 2):
+                    stpFreq.append(1/(pointsInInterval[i]-fqArray[len(fqArray)-2]))       #Converted to Hz (step/second)
+                if (len(stpFreq) == 2):
+                    if (stpFreq[0] > 1.4*stpFreq[1]):                                     #Remove intitial step that is too short (experimental frequency value)
+                        fqArray.remove(fqArray[0])
+                        stpFreq.remove(stpFreq[0])
+        steps = len(stpFreq)
+        frequency = stat.mean(stpFreq)
+        stdev = stat.stdev(stpFreq)
+        return steps, frequency, stdev
+
     def newMeasurements(self):
         steps = len(self.gf.splits)
         stepFq = stat.mean(self.gf.fqs)

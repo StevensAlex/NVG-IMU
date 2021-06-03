@@ -16,6 +16,7 @@ import threading
 class GUI:
     def __init__(self, window):
         window.title("xIMU analysis")
+        #window.iconbitmap('C:/Users/henke/source/repos/NVG-IMU/xIMU.ico')
         window.minsize(410,600)
         #window.geometry()
 
@@ -39,6 +40,9 @@ class GUI:
         
         self.makecalc_btn = tk.Button(window, text="Kör!", bg='green', fg='white', command=self.runCalc)
         self.makecalc_btn.place(x=180, y=85)
+        self.oldDispVar = tk.IntVar()
+        self.oldMethodToggle = tk.Checkbutton(window, text='Med gamla metoden', variable=self.oldDispVar, onvalue=1, offvalue=0)
+        self.oldMethodToggle.place(x=180,y=120)
         #-----------------------------------------------
 
         #-----  Displaying the results --------------
@@ -252,6 +256,9 @@ class GUI:
                 (self.total_steps, self.step_frequency, self.stdv_steps, self.step_height, self.stdv_height, 
                     self.max_height, self.min_height, self.step_length, self.stdv_length, self.step_side, 
                     self.stdv_side, self.xList, self.yList, self.zList )= self.calculations.newMeasurements()
+                if( self.oldDispVar.get() == 1):
+                    print(self.oldDispVar.get())
+                    self.total_steps, self.step_frequency,self.stdv_steps = self.oldFreqMethod()
                 self.togglePlotButtons('normal')
                 self.gaitNumber.set(0)
             elif(self.timeStart<self.min_t_val and self.max_t_val>0 ):
@@ -325,7 +332,7 @@ class GUI:
                 cutIndex = np.asarray(self.xList[nr-1] == 0).nonzero()
                 openfigs = plt.get_fignums()
                 if openfigs == []:
-                    messagebox.showwarning("notification", "Öppna graf genom att klicka på ""2D"" eller ""3D""\nför att se skillnad!")
+                    messagebox.showinfo("notification", "Öppna graf genom att klicka på ""2D"" eller ""3D""\nför att se skillnad!")
                 else:
                     if openfigs[0] == 2 or len(openfigs) == 2: 
                         if( self.clearVar.get() == 0):
@@ -355,6 +362,10 @@ class GUI:
             self.prevplot_btn['state']= argument
             self.nxtplot_btn['state']= argument
 
+    def oldFreqMethod(self):
+        steps, frequency, stdv = self.calculations.stepFrequency()
+        return steps, frequency, stdv
+
     def saveAsFile(self):
         try:
             self.save_filename = filedialog.asksaveasfilename(title="Save data",filetypes=(("csv files", "*csv"),("all files", "")))
@@ -367,7 +378,6 @@ class GUI:
         except:
             messagebox.showwarning("Notification", "Något hände!")
             
-
     def saveToFile(self):
         try:
             if self.save_filename == '':
