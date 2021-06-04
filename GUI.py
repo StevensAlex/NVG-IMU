@@ -271,7 +271,7 @@ class GUI:
             messagebox.showinfo("Notification", "Fönstrena tar bara emot siffror! \nKontrollera att inget tecken kom med och försök igen.")
         finally:
             self.updateValues(self.total_steps, self.step_frequency, self.stdv_steps, self.step_height, self.stdv_height,
-                              self.max_height,self.min_height,self.step_length,self.stdv_length, self.step_side, self.stdv_side)
+                                self.max_height,self.min_height,self.step_length,self.stdv_length, self.step_side, self.stdv_side)
             #plt.show()         #Debugg
 
     def plot2d(self):   

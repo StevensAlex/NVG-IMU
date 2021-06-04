@@ -8,7 +8,7 @@ class GaitFinder:
         #Prepare data
         self.gyroZ = dataArray[:,3]
         self.filZ = self.filter(self.gyroZ)
-        #plt.figure()
+        plt.figure()
 
         #Calculate new data
         self.peaks = self.findPeaks(self.filZ)
@@ -27,7 +27,7 @@ class GaitFinder:
         #for peak in self.peaks:
         #    plt.axvline(peak, color = 'r', ymin= 0.15, ymax=0.85)
         #for strike in self.strikes:
-        #    plt.axvline(strike, color = 'g', ymin= 0.15, ymax=0.85)
+        #    plt.axvline(strike, color = 'g', ymin= 0.15, ymax=0.90)
         #for off in self.offs:
         #    plt.axvline(off, color = 'm', ymin= 0.15, ymax=0.85)
         #plt.figure()
@@ -70,7 +70,7 @@ class GaitFinder:
                 if data[j] > threshold:
                     for k in range(j, peaks[i] + int((peaks[i+1] - peaks[i])/2)):
                         if data[k] < threshold:
-                            if data[k + np.argmax(data[k:k+int((peaks[i+1] - peaks[i])/4)])] > threshold:
+                            if data[k + np.argmax(data[k:k+int((peaks[i+1] - peaks[i])/4)])] > data[j + np.argmax(data[j:k])]:
                                 heelStrikes.append(k + np.argmax(data[k:k+int((peaks[i+1] - peaks[i])/4)]))
                             else:
                                 heelStrikes.append(j + np.argmax(data[j:k]))
@@ -82,29 +82,31 @@ class GaitFinder:
     #find all toe-off points
     def findOffs(self, strikes, data):
         threshold = 120
+        strikes.append(100000)
         offs = []
         i = 0
-        while i < len(strikes):
-            for j in range(strikes[i] + 50, strikes[i]+150):
+        while i < len(strikes) - 1:
+            for j in range(strikes[i]+20, strikes[i+1]-20):
                 if data[j] > threshold:
-                    for k in range(j, strikes[i]+150):
+                    for k in range(j, strikes[i+1]-20):
                         if data[k] < threshold:
                             offs.append(j + np.argmax(data[j:k]))
                             break
                     break
             i += 1
+        strikes.pop()
         return offs
 
     #find points where each gait cycle is to be split
     def findSplits(self, data, strikes, offs):
         splits = []
-        for i in range(len(strikes)):
+        for i in range(len(offs)):
             raw = data[strikes[i]:offs[i]]
             axis = np.arange(strikes[i], offs[i])
             model = np.poly1d(np.polyfit(axis, raw, 2))
             split = strikes[i] + np.argmin(model(axis))
-            #plt.plot(axis, model(axis), color='b')
-            #plt.axvline(split, color = 'b', ymin= 0.15, ymax=0.85)
+            plt.plot(axis, model(axis), color='b')
+            plt.axvline(split, color = 'b', ymin= 0.15, ymax=0.85)
             splits.append(split)
         return splits
 
